@@ -1,11 +1,18 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { aiEnhancements, recordings, transcriptions } from "@/db/schema";
+import {
+    aiEnhancements,
+    recordings,
+    transcriptions,
+    webhookDeliveries,
+} from "@/db/schema";
 import { requireApiSession } from "@/lib/auth-server";
 import { decryptText } from "@/lib/encryption/fields";
 import { AppError, apiHandler, ErrorCode } from "@/lib/errors";
 import { createUserStorageProvider } from "@/lib/storage/factory";
+import { emitEvent } from "@/lib/webhooks/emit";
+import { createRedactedWebhookPayload } from "@/lib/webhooks/payload";
 
 type IdContext = { params: Promise<{ id: string }> };
 
@@ -166,8 +173,30 @@ export const DELETE = apiHandler<IdContext>(async (request, context) => {
         // Object already absent — continue with tombstone.
     }
 
-    // 2. Atomic DB writes: child rows + tombstone in one transaction.
-    await db.transaction(async (tx) => {
+    // 2. Atomic DB writes: child rows, webhook delivery payload redaction,
+    //    and tombstone in one transaction.
+    const didTombstone = await db.transaction(async (tx) => {
+        const now = new Date();
+
+        // Lock the parent recording row up front. Without this, a
+        // concurrent transcribe/summary writer (which also re-checks
+        // tombstone under FOR UPDATE) could slip a new transcript or
+        // ai_enhancement row in between our child-row deletes and the
+        // final tombstone, leaving orphan rows pointing at a tombstoned
+        // recording. With the lock, concurrent writers either run before
+        // us (their rows get deleted by the child-row deletes below) or
+        // after us (they observe `deletedAt != null` and bail).
+        const [locked] = await tx
+            .select({ deletedAt: recordings.deletedAt })
+            .from(recordings)
+            .where(and(eq(recordings.id, id), eq(recordings.userId, userId)))
+            .for("update")
+            .limit(1);
+
+        // A concurrent DELETE already tombstoned and committed; nothing
+        // for us to do. Return false so we don't emit a duplicate event.
+        if (!locked || locked.deletedAt) return false;
+
         await tx
             .delete(transcriptions)
             .where(
@@ -187,16 +216,39 @@ export const DELETE = apiHandler<IdContext>(async (request, context) => {
             );
 
         await tx
+            .update(webhookDeliveries)
+            .set({
+                payload: createRedactedWebhookPayload(id, now),
+                updatedAt: now,
+            })
+            .where(
+                and(
+                    eq(webhookDeliveries.recordingId, id),
+                    eq(webhookDeliveries.userId, userId),
+                ),
+            );
+
+        // Returning lets us tell whether THIS request flipped the
+        // tombstone vs. a concurrent DELETE having already done it. We
+        // only want to emit `recording.deleted` for the winning request.
+        const tombstoned = await tx
             .update(recordings)
-            .set({ deletedAt: new Date(), updatedAt: new Date() })
+            .set({ deletedAt: now, updatedAt: now })
             .where(
                 and(
                     eq(recordings.id, id),
                     eq(recordings.userId, userId),
                     isNull(recordings.deletedAt),
                 ),
-            );
+            )
+            .returning({ id: recordings.id });
+
+        return tombstoned.length > 0;
     });
+
+    if (didTombstone) {
+        await emitEvent("recording.deleted", userId, id);
+    }
 
     return NextResponse.json({ success: true });
 });

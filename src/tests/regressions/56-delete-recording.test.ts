@@ -95,6 +95,10 @@ vi.mock("@/lib/transcription/transcribe-recording", () => ({
     transcribeRecording: vi.fn().mockResolvedValue({ success: true }),
 }));
 
+vi.mock("@/lib/webhooks/emit", () => ({
+    emitEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { db } from "@/db";
 import { createPlaudClient } from "@/lib/plaud/client-factory";
 import { createUserStorageProvider } from "@/lib/storage/factory";
@@ -227,12 +231,42 @@ describe("Issue #56 — delete recording tombstone", () => {
             [],
         ]);
 
+        // Sync now performs the update inside a tombstone-rechecking
+        // transaction. Stub the tx so the inner select returns a
+        // non-tombstoned row and the inner update resolves; cb returns
+        // true so emitEvent and the updated counter both fire.
+        (db.transaction as Mock).mockImplementation(
+            async (cb: (tx: unknown) => Promise<boolean>) => {
+                const tx = {
+                    select: vi.fn().mockReturnValue({
+                        from: vi.fn().mockReturnValue({
+                            where: vi.fn().mockReturnValue({
+                                for: vi.fn().mockReturnValue({
+                                    limit: vi
+                                        .fn()
+                                        .mockResolvedValue([
+                                            { deletedAt: null },
+                                        ]),
+                                }),
+                            }),
+                        }),
+                    }),
+                    update: vi.fn().mockReturnValue({
+                        set: vi.fn().mockReturnValue({
+                            where: vi.fn().mockResolvedValue(undefined),
+                        }),
+                    }),
+                };
+                return cb(tx);
+            },
+        );
+
         const result = await syncRecordingsForUser(mockUserId);
 
         expect(result.updatedRecordings).toBe(1);
         expect(result.newRecordings).toBe(0);
         expect(storageMock.uploadFile).toHaveBeenCalledTimes(1);
-        expect(db.update).toHaveBeenCalled();
+        expect(db.transaction).toHaveBeenCalled();
     });
 });
 
@@ -245,9 +279,11 @@ import {
     aiEnhancements,
     recordings as recordingsTable,
     transcriptions as transcriptionsTable,
+    webhookDeliveries,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { createUserStorageProvider as createStorage } from "@/lib/storage/factory";
+import { emitEvent } from "@/lib/webhooks/emit";
 
 describe("DELETE /api/recordings/[id]", () => {
     const userId = "user-123";
@@ -261,10 +297,12 @@ describe("DELETE /api/recordings/[id]", () => {
         });
 
     let txCalls: Array<{ table: string; op: "delete" | "update" }>;
+    let txSets: Array<{ table: string; values: Record<string, unknown> }>;
 
     beforeEach(() => {
         vi.clearAllMocks();
         txCalls = [];
+        txSets = [];
 
         (auth.api.getSession as unknown as Mock).mockResolvedValue({
             user: { id: userId },
@@ -280,11 +318,30 @@ describe("DELETE /api/recordings/[id]", () => {
                   ? "ai_enhancements"
                   : t === recordingsTable
                     ? "recordings"
-                    : "unknown";
+                    : t === webhookDeliveries
+                      ? "webhook_deliveries"
+                      : "unknown";
 
         (db.transaction as Mock).mockImplementation(
-            async (cb: (tx: unknown) => Promise<void>) => {
+            async (cb: (tx: unknown) => Promise<unknown>) => {
                 const tx = {
+                    // FOR UPDATE lock on the parent recording at the top
+                    // of the tombstone transaction. The default stub
+                    // returns a non-tombstoned row so the handler
+                    // proceeds; individual tests can override.
+                    select: vi.fn().mockReturnValue({
+                        from: vi.fn().mockReturnValue({
+                            where: vi.fn().mockReturnValue({
+                                for: vi.fn().mockReturnValue({
+                                    limit: vi
+                                        .fn()
+                                        .mockResolvedValue([
+                                            { deletedAt: null },
+                                        ]),
+                                }),
+                            }),
+                        }),
+                    }),
                     delete: vi.fn((table: unknown) => ({
                         where: vi.fn().mockImplementation(() => {
                             txCalls.push({
@@ -295,18 +352,45 @@ describe("DELETE /api/recordings/[id]", () => {
                         }),
                     })),
                     update: vi.fn((table: unknown) => ({
-                        set: vi.fn().mockReturnValue({
-                            where: vi.fn().mockImplementation(() => {
+                        set: vi.fn((values: Record<string, unknown>) => {
+                            // The recordings tombstone update now chains
+                            // .returning(...) so the handler can tell
+                            // whether it actually flipped the row (and
+                            // therefore should emit `recording.deleted`).
+                            // Other tx.update calls in this transaction
+                            // (webhook_deliveries) still resolve directly.
+                            const recordWrite = () => {
                                 txCalls.push({
                                     table: tableName(table),
                                     op: "update",
                                 });
+                                txSets.push({
+                                    table: tableName(table),
+                                    values,
+                                });
+                            };
+                            const wherePromise = (): Promise<unknown> => {
+                                recordWrite();
                                 return Promise.resolve(undefined);
-                            }),
+                            };
+                            return {
+                                where: vi.fn().mockImplementation(() => {
+                                    const whereResult = wherePromise();
+                                    return Object.assign(whereResult, {
+                                        returning: vi
+                                            .fn()
+                                            .mockResolvedValue(
+                                                table === recordingsTable
+                                                    ? [{ id: recordingId }]
+                                                    : [],
+                                            ),
+                                    });
+                                }),
+                            };
                         }),
                     })),
                 };
-                await cb(tx);
+                return cb(tx);
             },
         );
     });
@@ -390,7 +474,7 @@ describe("DELETE /api/recordings/[id]", () => {
         );
     });
 
-    it("deletes storage, then child rows + tombstone in one tx", async () => {
+    it("deletes storage, then child rows + webhook payloads + tombstone in one tx", async () => {
         const deleteFile = vi.fn().mockResolvedValue(undefined);
         (createStorage as Mock).mockResolvedValue({
             uploadFile: vi.fn(),
@@ -408,14 +492,30 @@ describe("DELETE /api/recordings/[id]", () => {
         expect(deleteFile.mock.invocationCallOrder[0]).toBeLessThan(
             (db.transaction as Mock).mock.invocationCallOrder[0],
         );
-        // All three writes ran in the same transaction…
-        expect(txCalls).toHaveLength(3);
-        // …in this order: transcriptions → ai_enhancements → recordings.
+        // All writes ran in the same transaction…
+        expect(txCalls).toHaveLength(4);
+        // …in this order: transcriptions → ai_enhancements → webhook redaction → recordings.
         expect(txCalls.map((c) => `${c.op}:${c.table}`)).toEqual([
             "delete:transcriptions",
             "delete:ai_enhancements",
+            "update:webhook_deliveries",
             "update:recordings",
         ]);
+        const webhookUpdate = txSets.find(
+            (entry) => entry.table === "webhook_deliveries",
+        );
+        expect(webhookUpdate?.values.payload).toMatchObject({
+            recording_id: recordingId,
+            redacted: true,
+        });
+        expect(emitEvent).toHaveBeenCalledWith(
+            "recording.deleted",
+            userId,
+            recordingId,
+        );
+        expect(
+            (db.transaction as Mock).mock.invocationCallOrder[0],
+        ).toBeLessThan((emitEvent as Mock).mock.invocationCallOrder[0]);
     });
 
     it("refuses to tombstone when storage delete fails for a non-not-found reason", async () => {
@@ -435,6 +535,7 @@ describe("DELETE /api/recordings/[id]", () => {
         expect(res.status).toBe(500);
         // No tombstone, no orphan: retry is safe.
         expect(db.transaction).not.toHaveBeenCalled();
+        expect(emitEvent).not.toHaveBeenCalled();
     });
 
     it("still tombstones when storage reports the object is already gone", async () => {
@@ -458,7 +559,63 @@ describe("DELETE /api/recordings/[id]", () => {
         expect(txCalls.map((c) => `${c.op}:${c.table}`)).toEqual([
             "delete:transcriptions",
             "delete:ai_enhancements",
+            "update:webhook_deliveries",
             "update:recordings",
         ]);
+        expect(emitEvent).toHaveBeenCalledWith(
+            "recording.deleted",
+            userId,
+            recordingId,
+        );
+    });
+
+    it("bails out cleanly when a concurrent DELETE has already tombstoned the row", async () => {
+        // Both DELETE requests pass the pre-transaction read because the
+        // recording is still active when they each look it up. The
+        // tombstone-detection happens under FOR UPDATE inside the
+        // transaction: the loser sees `deletedAt != null` and returns
+        // false from the cb so no child-row deletes, no webhook payload
+        // redaction, no second `recording.deleted` emit fire.
+        const deleteFile = vi.fn().mockResolvedValue(undefined);
+        (createStorage as Mock).mockResolvedValue({
+            uploadFile: vi.fn(),
+            downloadFile: vi.fn(),
+            deleteFile,
+        });
+        stubRecordingLookup([
+            { id: recordingId, userId, storagePath, deletedAt: null },
+        ]);
+
+        // Override the default tx.select stub so the FOR UPDATE re-check
+        // returns an already-tombstoned row.
+        (db.transaction as Mock).mockImplementationOnce(
+            async (cb: (tx: unknown) => Promise<unknown>) => {
+                const tx = {
+                    select: vi.fn().mockReturnValue({
+                        from: vi.fn().mockReturnValue({
+                            where: vi.fn().mockReturnValue({
+                                for: vi.fn().mockReturnValue({
+                                    limit: vi.fn().mockResolvedValue([
+                                        {
+                                            deletedAt: new Date(
+                                                "2024-02-01T00:00:00Z",
+                                            ),
+                                        },
+                                    ]),
+                                }),
+                            }),
+                        }),
+                    }),
+                    delete: vi.fn(),
+                    update: vi.fn(),
+                };
+                return cb(tx);
+            },
+        );
+
+        const res = await deleteRecording(makeRequest(), { params });
+        expect(res.status).toBe(200);
+        expect(txCalls).toHaveLength(0);
+        expect(emitEvent).not.toHaveBeenCalled();
     });
 });

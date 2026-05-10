@@ -8,6 +8,7 @@ import { sendNewRecordingEmail } from "@/lib/notifications/email";
 import { createPlaudClient } from "@/lib/plaud/client-factory";
 import { createUserStorageProvider } from "@/lib/storage/factory";
 import { transcribeRecording } from "@/lib/transcription/transcribe-recording";
+import { emitEvent } from "@/lib/webhooks/emit";
 import type { PlaudRecording } from "@/types/plaud";
 
 /**
@@ -60,6 +61,7 @@ async function uniqueStorageKey(
             .from(recordings)
             .where(
                 and(
+                    eq(recordings.userId, userId),
                     eq(recordings.storagePath, key),
                     ne(recordings.plaudFileId, plaudFileId),
                 ),
@@ -89,7 +91,12 @@ async function processRecording(
         const [existingRecording] = await db
             .select()
             .from(recordings)
-            .where(eq(recordings.plaudFileId, plaudRecording.id))
+            .where(
+                and(
+                    eq(recordings.plaudFileId, plaudRecording.id),
+                    eq(recordings.userId, context.userId),
+                ),
+            )
             .limit(1);
 
         const versionKey = plaudRecording.version_ms.toString();
@@ -153,11 +160,60 @@ async function processRecording(
         };
 
         if (existingRecording) {
-            // Update existing recording
-            await db
-                .update(recordings)
-                .set({ ...recordingData, updatedAt: new Date() })
-                .where(eq(recordings.id, existingRecording.id));
+            // The pre-download `select` happened before the slow
+            // download/upload above. A concurrent DELETE could have
+            // tombstoned the row in the meantime. Re-check under a row
+            // lock so we don't resurrect a deleted recording, and only
+            // emit `recording.updated` when we actually wrote.
+            const updated = await db.transaction(async (tx) => {
+                const [locked] = await tx
+                    .select({ deletedAt: recordings.deletedAt })
+                    .from(recordings)
+                    .where(
+                        and(
+                            eq(recordings.id, existingRecording.id),
+                            eq(recordings.userId, context.userId),
+                        ),
+                    )
+                    .for("update")
+                    .limit(1);
+
+                if (!locked || locked.deletedAt) return false;
+
+                await tx
+                    .update(recordings)
+                    .set({ ...recordingData, updatedAt: new Date() })
+                    .where(
+                        and(
+                            eq(recordings.id, existingRecording.id),
+                            eq(recordings.userId, context.userId),
+                        ),
+                    );
+                return true;
+            });
+
+            if (!updated) {
+                // Concurrent DELETE tombstoned the recording while we
+                // were downloading/uploading. The just-uploaded blob
+                // would otherwise be orphaned because we're no longer
+                // writing the recordings row that references it. Best
+                // effort cleanup; storage "already gone" is acceptable.
+                try {
+                    await storage.deleteFile(storageKey);
+                } catch (cleanupError) {
+                    console.error(
+                        `Failed to clean up orphaned storage object ${storageKey} after concurrent delete:`,
+                        cleanupError,
+                    );
+                }
+                return { status: "skipped" };
+            }
+
+            await emitEvent(
+                "recording.updated",
+                context.userId,
+                existingRecording.id,
+            );
             return {
                 status: "updated",
                 recordingId: existingRecording.id,
@@ -165,11 +221,15 @@ async function processRecording(
             };
         }
 
-        // Insert new recording
+        // Insert new recording. Concurrent inserts of the same plaud_file_id
+        // by parallel sync runs are caught by the (user_id, plaud_file_id)
+        // unique constraint and surface as an error to the caller.
         const [newRecording] = await db
             .insert(recordings)
             .values(recordingData)
             .returning({ id: recordings.id });
+
+        await emitEvent("recording.synced", context.userId, newRecording.id);
 
         return {
             status: "new",
