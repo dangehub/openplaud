@@ -27,7 +27,7 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
+    const { push, refresh } = useRouter();
 
     // No token in URL, or better-auth signaled an error on the callback --
     // either the user navigated here directly, the token expired, or the
@@ -39,7 +39,7 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
                 <div className="flex items-center gap-3">
                     <Logo className="size-10 shrink-0" />
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
+                        <h1 className="text-2xl font-semibold tracking-tight">
                             Invalid reset link
                         </h1>
                         <p className="text-sm text-muted-foreground">
@@ -104,8 +104,8 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
             }
 
             toast.success("Password reset. You can sign in now.");
-            router.push("/login");
-            router.refresh();
+            push("/login");
+            refresh();
         } catch (err) {
             const message =
                 err instanceof Error
@@ -122,7 +122,7 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
             <div className="flex items-center gap-3">
                 <Logo className="size-10 shrink-0" />
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">
+                    <h1 className="text-2xl font-semibold tracking-tight">
                         Set a new password
                     </h1>
                     <p className="text-sm text-muted-foreground">

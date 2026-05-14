@@ -46,7 +46,7 @@ export default async function AdminUsersPage({
                 <div>
                     <h1 className="text-xl font-semibold">Users</h1>
                     <p className="text-sm text-muted-foreground">
-                        Cost-attribution view. PII surface — emails visible.
+                        Cost-attribution view. PII surface: emails visible.
                     </p>
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -65,7 +65,7 @@ export default async function AdminUsersPage({
                 <select
                     name="sort"
                     defaultValue={sort}
-                    className="border rounded px-2 py-2 text-sm bg-background"
+                    className="border rounded p-2 text-sm bg-background"
                 >
                     {SORTS.map((s) => (
                         <option key={s.key} value={s.key}>

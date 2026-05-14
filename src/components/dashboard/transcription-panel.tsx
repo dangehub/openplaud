@@ -11,8 +11,6 @@ import {
     Sparkles,
     Trash2,
 } from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -22,20 +20,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { useTranscriptionSummary } from "@/hooks/use-transcription-summary";
 import { SUMMARY_PRESETS } from "@/lib/ai/summary-presets";
 import type { Recording } from "@/types/recording";
 
 interface Transcription {
     text?: string;
     language?: string;
-}
-
-interface SummaryData {
-    summary: string | null;
-    keyPoints: string[] | null;
-    actionItems: string[] | null;
-    provider?: string;
-    model?: string;
 }
 
 interface TranscriptionPanelProps {
@@ -51,92 +42,19 @@ export function TranscriptionPanel({
     isTranscribing,
     onTranscribe,
 }: TranscriptionPanelProps) {
-    const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
-    const [isSummarizing, setIsSummarizing] = useState(false);
-    const [summaryExpanded, setSummaryExpanded] = useState(true);
-    const [summaryPreset, setSummaryPreset] = useState("general");
-    // Key to force re-fetch summary (e.g. after transcription text changes)
-    const [summaryFetchKey, setSummaryFetchKey] = useState(0);
-    const transcriptionTextRef = React.useRef(transcription?.text);
-
-    // Detect when transcription text actually changes → invalidate summary
-    if (transcription?.text !== transcriptionTextRef.current) {
-        transcriptionTextRef.current = transcription?.text;
-        // will trigger the useEffect below on next render
-        setSummaryFetchKey((k) => k + 1);
-        setSummaryData(null);
-    }
-
-    // Fetch existing summary when recording changes
-    // biome-ignore lint/correctness/useExhaustiveDependencies: summaryFetchKey is an intentional re-fetch signal
-    useEffect(() => {
-        setSummaryData(null);
-        if (!recording?.id) return;
-
-        const controller = new AbortController();
-        fetch(`/api/recordings/${recording.id}/summary`, {
-            signal: controller.signal,
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                if (data.summary) {
-                    setSummaryData(data);
-                }
-            })
-            .catch(() => {});
-
-        return () => controller.abort();
-    }, [recording?.id, summaryFetchKey]);
-
-    const handleSummarize = useCallback(async () => {
-        setIsSummarizing(true);
-        try {
-            const response = await fetch(
-                `/api/recordings/${recording.id}/summary`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ preset: summaryPreset }),
-                },
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                setSummaryData(data);
-                toast.success("Summary generated");
-            } else {
-                const error = await response.json();
-                toast.error(error.error || "Summary generation failed");
-            }
-        } catch {
-            toast.error("Failed to generate summary");
-        } finally {
-            setIsSummarizing(false);
-        }
-    }, [recording.id, summaryPreset]);
-
-    const handleDeleteSummary = useCallback(async () => {
-        // Optimistic delete
-        const previous = summaryData;
-        setSummaryData(null);
-
-        try {
-            const response = await fetch(
-                `/api/recordings/${recording.id}/summary`,
-                { method: "DELETE" },
-            );
-
-            if (response.ok) {
-                toast.success("Summary deleted");
-            } else {
-                setSummaryData(previous);
-                toast.error("Failed to delete summary");
-            }
-        } catch {
-            setSummaryData(previous);
-            toast.error("Failed to delete summary");
-        }
-    }, [recording.id, summaryData]);
+    const {
+        summaryData,
+        isSummarizing,
+        summaryExpanded,
+        setSummaryExpanded,
+        summaryPreset,
+        setSummaryPreset,
+        handleSummarize,
+        handleDeleteSummary,
+    } = useTranscriptionSummary({
+        recordingId: recording?.id,
+        transcriptionText: transcription?.text,
+    });
 
     return (
         <div className="space-y-4">
@@ -145,7 +63,7 @@ export function TranscriptionPanel({
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
-                            <FileText className="w-5 h-5" />
+                            <FileText className="size-5" />
                             Transcription
                         </CardTitle>
                         <div className="flex items-center gap-2">
@@ -156,7 +74,7 @@ export function TranscriptionPanel({
                                     variant="outline"
                                     disabled={isTranscribing}
                                 >
-                                    <RefreshCw className="w-4 h-4 mr-2" />
+                                    <RefreshCw className="size-4 mr-2" />
                                     Re-transcribe
                                 </Button>
                             )}
@@ -166,7 +84,7 @@ export function TranscriptionPanel({
                                     size="sm"
                                     disabled={isTranscribing}
                                 >
-                                    <Sparkles className="w-4 h-4 mr-2" />
+                                    <Sparkles className="size-4 mr-2" />
                                     Transcribe
                                 </Button>
                             )}
@@ -176,9 +94,9 @@ export function TranscriptionPanel({
                 <CardContent>
                     {isTranscribing ? (
                         <div className="flex flex-col items-center justify-center py-12">
-                            <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mb-4" />
+                            <div className="animate-spin size-8 border-2 border-primary border-t-transparent rounded-full mb-4" />
                             <p className="text-sm text-muted-foreground">
-                                Transcribing audio...
+                                Transcribing audio…
                             </p>
                         </div>
                     ) : transcription?.text ? (
@@ -191,7 +109,7 @@ export function TranscriptionPanel({
                             <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
                                 {transcription.language && (
                                     <div className="flex items-center gap-1">
-                                        <Languages className="w-3 h-3" />
+                                        <Languages className="size-3" />
                                         <span>
                                             Language: {transcription.language}
                                         </span>
@@ -211,9 +129,9 @@ export function TranscriptionPanel({
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-10 text-center">
-                            <FileText className="w-10 h-10 text-muted-foreground mb-3" />
+                            <FileText className="size-10 text-muted-foreground mb-3" />
                             <p className="text-sm text-muted-foreground">
-                                No transcription yet — use the Transcribe button
+                                No transcription yet. Use the Transcribe button
                                 above.
                             </p>
                         </div>
@@ -221,13 +139,13 @@ export function TranscriptionPanel({
                 </CardContent>
             </Card>
 
-            {/* Summary Card — only show when transcription exists */}
+            {/* Summary Card -- only show when transcription exists */}
             {transcription?.text && (
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2">
-                                <ListChecks className="w-5 h-5" />
+                                <ListChecks className="size-5" />
                                 Summary
                             </CardTitle>
                             <div className="flex items-center gap-2">
@@ -263,17 +181,17 @@ export function TranscriptionPanel({
                                 >
                                     {isSummarizing ? (
                                         <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            Generating...
+                                            <Loader2 className="size-4 mr-2 animate-spin" />
+                                            Generating…
                                         </>
                                     ) : summaryData ? (
                                         <>
-                                            <RefreshCw className="w-4 h-4 mr-2" />
+                                            <RefreshCw className="size-4 mr-2" />
                                             Re-generate
                                         </>
                                     ) : (
                                         <>
-                                            <Sparkles className="w-4 h-4 mr-2" />
+                                            <Sparkles className="size-4 mr-2" />
                                             Summarize
                                         </>
                                     )}
@@ -284,9 +202,9 @@ export function TranscriptionPanel({
                     <CardContent>
                         {isSummarizing ? (
                             <div className="flex flex-col items-center justify-center py-8">
-                                <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+                                <Loader2 className="size-8 animate-spin text-primary mb-4" />
                                 <p className="text-sm text-muted-foreground">
-                                    Generating summary...
+                                    Generating summary…
                                 </p>
                             </div>
                         ) : summaryData?.summary ? (
@@ -299,9 +217,9 @@ export function TranscriptionPanel({
                                     className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors"
                                 >
                                     {summaryExpanded ? (
-                                        <ChevronUp className="w-4 h-4" />
+                                        <ChevronUp className="size-4" />
                                     ) : (
-                                        <ChevronDown className="w-4 h-4" />
+                                        <ChevronDown className="size-4" />
                                     )}
                                     {summaryExpanded
                                         ? "Collapse"
@@ -336,7 +254,7 @@ export function TranscriptionPanel({
                                                                         }
                                                                         className="text-sm text-muted-foreground flex items-start gap-2"
                                                                     >
-                                                                        <span className="text-primary mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                                                        <span className="text-primary mt-1.5 size-1.5 rounded-full bg-primary shrink-0" />
                                                                         {point}
                                                                     </li>
                                                                 );
@@ -365,7 +283,7 @@ export function TranscriptionPanel({
                                                                         }
                                                                         className="text-sm text-muted-foreground flex items-start gap-2"
                                                                     >
-                                                                        <ListChecks className="w-3.5 h-3.5 mt-0.5 text-primary shrink-0" />
+                                                                        <ListChecks className="size-3.5 mt-0.5 text-primary shrink-0" />
                                                                         {item}
                                                                     </li>
                                                                 );
@@ -395,7 +313,7 @@ export function TranscriptionPanel({
                                                 variant="ghost"
                                                 className="text-destructive hover:text-destructive"
                                             >
-                                                <Trash2 className="w-4 h-4 mr-1" />
+                                                <Trash2 className="size-4 mr-1" />
                                                 Delete
                                             </Button>
                                         </div>
@@ -404,7 +322,7 @@ export function TranscriptionPanel({
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center py-8 text-center">
-                                <ListChecks className="w-10 h-10 text-muted-foreground mb-3" />
+                                <ListChecks className="size-10 text-muted-foreground mb-3" />
                                 <p className="text-sm text-muted-foreground">
                                     No summary yet. Click "Summarize" to
                                     generate one.

@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { MetalButton } from "@/components/metal-button";
 
 export function BackButton() {
-    const router = useRouter();
+    const { push } = useRouter();
 
     return (
-        <MetalButton onClick={() => router.push("/dashboard")} size="icon">
-            <ArrowLeft className="h-4 w-4" />
+        <MetalButton onClick={() => push("/dashboard")} size="icon">
+            <ArrowLeft className="size-4" />
         </MetalButton>
     );
 }

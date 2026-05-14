@@ -1,6 +1,6 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
+import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 const metalButtonVariants = cva(
@@ -17,7 +17,7 @@ const metalButtonVariants = cva(
                 default: "h-10 px-6 py-2",
                 sm: "h-8 px-4 text-xs",
                 lg: "h-12 px-8 text-base",
-                icon: "h-10 w-10",
+                icon: "size-10",
             },
         },
         defaultVariants: {
@@ -36,22 +36,25 @@ export interface MetalButtonProps
      * avoid nesting interactive elements (`<a><button>` is invalid markup).
      */
     asChild?: boolean;
+    ref?: React.Ref<HTMLButtonElement>;
 }
 
-const MetalButton = React.forwardRef<HTMLButtonElement, MetalButtonProps>(
-    ({ className, variant, size, asChild = false, ...props }, ref) => {
-        const Comp = asChild ? Slot : "button";
-        return (
-            <Comp
-                className={cn(
-                    metalButtonVariants({ variant, size, className }),
-                )}
-                ref={ref}
-                {...props}
-            />
-        );
-    },
-);
-MetalButton.displayName = "MetalButton";
+function MetalButton({
+    className,
+    variant,
+    size,
+    asChild = false,
+    ref,
+    ...props
+}: MetalButtonProps) {
+    const Comp = asChild ? Slot : "button";
+    return (
+        <Comp
+            className={cn(metalButtonVariants({ variant, size, className }))}
+            ref={ref}
+            {...props}
+        />
+    );
+}
 
 export { MetalButton, metalButtonVariants };

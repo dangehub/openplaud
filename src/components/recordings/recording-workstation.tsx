@@ -6,6 +6,7 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { RecordingPlayer } from "@/components/dashboard/recording-player";
 import { TranscriptionPanel } from "@/components/dashboard/transcription-panel";
+import { LocalTime } from "@/components/local-time";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -48,7 +49,7 @@ export function RecordingWorkstation({
     initialAutoPlayNext,
     scrubberStyle,
 }: RecordingWorkstationProps) {
-    const router = useRouter();
+    const { push, refresh } = useRouter();
     const [isTranscribing, setIsTranscribing] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -65,7 +66,7 @@ export function RecordingWorkstation({
 
             if (response.ok) {
                 toast.success("Transcription complete");
-                router.refresh();
+                refresh();
             } else {
                 const error = await response.json();
                 toast.error(error.error || "Transcription failed");
@@ -75,7 +76,7 @@ export function RecordingWorkstation({
         } finally {
             setIsTranscribing(false);
         }
-    }, [recording.id, router]);
+    }, [recording.id, refresh]);
 
     const handleDelete = useCallback(async () => {
         setIsDeleting(true);
@@ -87,8 +88,8 @@ export function RecordingWorkstation({
             if (response.ok) {
                 toast.success("Recording deleted");
                 setDeleteDialogOpen(false);
-                router.push("/dashboard");
-                router.refresh();
+                push("/dashboard");
+                refresh();
             } else {
                 const error = await response.json().catch(() => ({}));
                 toast.error(error.error || "Failed to delete recording");
@@ -98,7 +99,7 @@ export function RecordingWorkstation({
             toast.error("Failed to delete recording");
             setIsDeleting(false);
         }
-    }, [recording.id, router]);
+    }, [recording.id, refresh, push]);
 
     return (
         <div className="bg-background">
@@ -106,18 +107,18 @@ export function RecordingWorkstation({
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6">
                     <Button
-                        onClick={() => router.push("/dashboard")}
+                        onClick={() => push("/dashboard")}
                         variant="outline"
                         size="icon"
                     >
-                        <ArrowLeft className="w-4 h-4" />
+                        <ArrowLeft className="size-4" />
                     </Button>
                     <div className="flex-1 min-w-0">
-                        <h1 className="text-3xl font-bold truncate">
+                        <h1 className="text-3xl font-semibold truncate">
                             {recording.filename}
                         </h1>
                         <p className="text-muted-foreground text-sm mt-1">
-                            {new Date(recording.startTime).toLocaleString()}
+                            <LocalTime value={recording.startTime} />
                         </p>
                     </div>
                     <Button
@@ -127,7 +128,7 @@ export function RecordingWorkstation({
                         aria-label="Delete recording"
                         title="Delete recording"
                     >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="size-4" />
                     </Button>
                 </div>
 
@@ -191,9 +192,10 @@ export function RecordingWorkstation({
                                         Date
                                     </div>
                                     <div className="font-medium">
-                                        {new Date(
-                                            recording.startTime,
-                                        ).toLocaleDateString()}
+                                        <LocalTime
+                                            value={recording.startTime}
+                                            variant="date"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -233,7 +235,7 @@ export function RecordingWorkstation({
                         >
                             {isDeleting ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    <Loader2 className="size-4 mr-2 animate-spin" />
                                     Deleting…
                                 </>
                             ) : (

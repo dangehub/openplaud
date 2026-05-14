@@ -17,7 +17,7 @@ export function RegisterForm() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
+    const { push, refresh } = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,8 +47,8 @@ export function RegisterForm() {
             }
 
             toast.success("Account created successfully");
-            router.push("/onboarding");
-            router.refresh();
+            push("/onboarding");
+            refresh();
         } catch (error) {
             const message =
                 error instanceof Error
@@ -65,7 +65,7 @@ export function RegisterForm() {
             <div className="flex items-center gap-3">
                 <Logo className="size-10 shrink-0" />
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">
+                    <h1 className="text-2xl font-semibold tracking-tight">
                         Create Account
                     </h1>
                     <p className="text-sm text-muted-foreground">

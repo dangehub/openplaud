@@ -59,7 +59,7 @@ export function UserMenu({
     onOpenSettings,
     onOpenShortcuts,
 }: UserMenuProps) {
-    const router = useRouter();
+    const { push, refresh } = useRouter();
     const { theme, setTheme } = useTheme(initialTheme);
 
     const themeOptions = [
@@ -82,7 +82,7 @@ export function UserMenu({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 p-0">
                 {/* Identity block */}
-                <div className="flex items-center gap-3 border-b px-3 py-3">
+                <div className="flex items-center gap-3 border-b p-3">
                     <div
                         className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary"
                         aria-hidden="true"
@@ -112,9 +112,7 @@ export function UserMenu({
                         <Kbd>?</Kbd>
                     </DropdownMenuItem>
                     {isAdmin && (
-                        <DropdownMenuItem
-                            onSelect={() => router.push("/admin")}
-                        >
+                        <DropdownMenuItem onSelect={() => push("/admin")}>
                             <Shield />
                             <span className="flex-1">Admin dashboard</span>
                         </DropdownMenuItem>
@@ -173,8 +171,8 @@ export function UserMenu({
                         variant="destructive"
                         onSelect={async () => {
                             await signOut();
-                            router.push("/");
-                            router.refresh();
+                            push("/");
+                            refresh();
                         }}
                     >
                         <LogOut />

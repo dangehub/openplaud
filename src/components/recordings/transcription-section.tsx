@@ -9,7 +9,7 @@ import {
     Sparkles,
     Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { LEDIndicator } from "@/components/led-indicator";
 import { MetalButton } from "@/components/metal-button";
@@ -21,15 +21,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { useTranscriptionSummary } from "@/hooks/use-transcription-summary";
 import { SUMMARY_PRESETS } from "@/lib/ai/summary-presets";
-
-interface SummaryData {
-    summary: string | null;
-    keyPoints: string[] | null;
-    actionItems: string[] | null;
-    provider?: string;
-    model?: string;
-}
 
 interface TranscriptionSectionProps {
     recordingId: string;
@@ -49,34 +42,20 @@ export function TranscriptionSection({
     const [transcriptionType, setTranscriptionType] = useState(initialType);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    // Summary state
-    const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
-    const [isSummarizing, setIsSummarizing] = useState(false);
-    const [summaryExpanded, setSummaryExpanded] = useState(true);
-    const [summaryPreset, setSummaryPreset] = useState("general");
-
-    // Key to force re-fetch summary (e.g. after re-transcription)
-    const [summaryFetchKey, setSummaryFetchKey] = useState(0);
-
-    // Fetch existing summary on mount / after re-transcribe
-    // biome-ignore lint/correctness/useExhaustiveDependencies: summaryFetchKey is an intentional re-fetch trigger
-    useEffect(() => {
-        const controller = new AbortController();
-        fetch(`/api/recordings/${recordingId}/summary`, {
-            signal: controller.signal,
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                if (data.summary) {
-                    setSummaryData(data);
-                } else {
-                    setSummaryData(null);
-                }
-            })
-            .catch(() => {});
-
-        return () => controller.abort();
-    }, [recordingId, summaryFetchKey]);
+    const {
+        summaryData,
+        isSummarizing,
+        summaryExpanded,
+        setSummaryExpanded,
+        summaryPreset,
+        setSummaryPreset,
+        handleSummarize,
+        handleDeleteSummary,
+        refetchSummary,
+    } = useTranscriptionSummary({
+        recordingId,
+        transcriptionText: transcription,
+    });
 
     const handleTranscribe = async () => {
         setIsProcessing(true);
@@ -107,9 +86,12 @@ export function TranscriptionSection({
             setTranscription(data.transcription);
             setDetectedLanguage(data.detectedLanguage);
             setTranscriptionType("server");
-            // Invalidate cached summary — it was based on old text
-            setSummaryData(null);
-            setSummaryFetchKey((k) => k + 1);
+            // Force a summary re-fetch -- the server may have already
+            // auto-summarized. The hook also handles text-change
+            // invalidation via its internal ref, but we trigger here
+            // explicitly because we own the transcription state and
+            // know the moment it changes.
+            refetchSummary();
             toast.success("Transcription complete");
         } catch {
             toast.error("Transcription failed. Please try again.");
@@ -118,56 +100,6 @@ export function TranscriptionSection({
         }
     };
 
-    const handleSummarize = useCallback(async () => {
-        setIsSummarizing(true);
-        try {
-            const response = await fetch(
-                `/api/recordings/${recordingId}/summary`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ preset: summaryPreset }),
-                },
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                setSummaryData(data);
-                toast.success("Summary generated");
-            } else {
-                const error = await response.json();
-                toast.error(error.error || "Summary generation failed");
-            }
-        } catch {
-            toast.error("Failed to generate summary");
-        } finally {
-            setIsSummarizing(false);
-        }
-    }, [recordingId, summaryPreset]);
-
-    const handleDeleteSummary = useCallback(async () => {
-        // Optimistic delete
-        const previous = summaryData;
-        setSummaryData(null);
-
-        try {
-            const response = await fetch(
-                `/api/recordings/${recordingId}/summary`,
-                { method: "DELETE" },
-            );
-
-            if (response.ok) {
-                toast.success("Summary deleted");
-            } else {
-                setSummaryData(previous);
-                toast.error("Failed to delete summary");
-            }
-        } catch {
-            setSummaryData(previous);
-            toast.error("Failed to delete summary");
-        }
-    }, [recordingId, summaryData]);
-
     return (
         <div className="space-y-6">
             {/* Transcription Panel */}
@@ -175,7 +107,9 @@ export function TranscriptionSection({
                 <div className="space-y-4">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div className="flex flex-wrap items-center gap-3">
-                            <h2 className="text-xl font-bold">Transcription</h2>
+                            <h2 className="text-xl font-semibold">
+                                Transcription
+                            </h2>
                             {detectedLanguage && (
                                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-panel-inset">
                                     <LEDIndicator
@@ -204,7 +138,7 @@ export function TranscriptionSection({
                             className="w-full md:w-auto"
                         >
                             {isProcessing
-                                ? "Processing..."
+                                ? "Processing…"
                                 : transcription
                                   ? "Re-transcribe"
                                   : "Transcribe"}
@@ -237,13 +171,15 @@ export function TranscriptionSection({
                 </div>
             </Panel>
 
-            {/* Summary Panel — only show when transcription exists */}
+            {/* Summary Panel -- only show when transcription exists */}
             {transcription && (
                 <Panel>
                     <div className="space-y-4">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div className="flex items-center gap-3">
-                                <h2 className="text-xl font-bold">Summary</h2>
+                                <h2 className="text-xl font-semibold">
+                                    Summary
+                                </h2>
                             </div>
                             <div className="flex items-center gap-2">
                                 {!isSummarizing && (
@@ -276,17 +212,17 @@ export function TranscriptionSection({
                                 >
                                     {isSummarizing ? (
                                         <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
-                                            Generating...
+                                            <Loader2 className="size-4 mr-2 animate-spin inline" />
+                                            Generating…
                                         </>
                                     ) : summaryData ? (
                                         <>
-                                            <RefreshCw className="w-4 h-4 mr-2 inline" />
+                                            <RefreshCw className="size-4 mr-2 inline" />
                                             Re-generate
                                         </>
                                     ) : (
                                         <>
-                                            <Sparkles className="w-4 h-4 mr-2 inline" />
+                                            <Sparkles className="size-4 mr-2 inline" />
                                             Summarize
                                         </>
                                     )}
@@ -296,9 +232,9 @@ export function TranscriptionSection({
 
                         {isSummarizing ? (
                             <Panel variant="inset" className="text-center py-8">
-                                <Loader2 className="w-8 h-8 animate-spin text-accent-cyan mx-auto mb-4" />
+                                <Loader2 className="size-8 animate-spin text-accent-cyan mx-auto mb-4" />
                                 <p className="text-muted-foreground">
-                                    Generating summary...
+                                    Generating summary…
                                 </p>
                             </Panel>
                         ) : summaryData?.summary ? (
@@ -311,9 +247,9 @@ export function TranscriptionSection({
                                     className="flex items-center gap-1 text-sm font-medium hover:text-accent-cyan transition-colors"
                                 >
                                     {summaryExpanded ? (
-                                        <ChevronUp className="w-4 h-4" />
+                                        <ChevronUp className="size-4" />
                                     ) : (
-                                        <ChevronDown className="w-4 h-4" />
+                                        <ChevronDown className="size-4" />
                                     )}
                                     {summaryExpanded
                                         ? "Collapse"
@@ -346,7 +282,7 @@ export function TranscriptionSection({
                                                                         }
                                                                         className="text-sm text-muted-foreground flex items-start gap-2"
                                                                     >
-                                                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent-cyan shrink-0" />
+                                                                        <span className="mt-1.5 size-1.5 rounded-full bg-accent-cyan shrink-0" />
                                                                         {point}
                                                                     </li>
                                                                 );
@@ -374,7 +310,7 @@ export function TranscriptionSection({
                                                                         }
                                                                         className="text-sm text-muted-foreground flex items-start gap-2"
                                                                     >
-                                                                        <ListChecks className="w-3.5 h-3.5 mt-0.5 text-accent-cyan shrink-0" />
+                                                                        <ListChecks className="size-3.5 mt-0.5 text-accent-cyan shrink-0" />
                                                                         {item}
                                                                     </li>
                                                                 );
@@ -402,7 +338,7 @@ export function TranscriptionSection({
                                                 variant="cyan"
                                                 className="text-xs"
                                             >
-                                                <Trash2 className="w-3.5 h-3.5 mr-1 inline" />
+                                                <Trash2 className="size-3.5 mr-1 inline" />
                                                 Delete
                                             </MetalButton>
                                         </div>
@@ -411,7 +347,7 @@ export function TranscriptionSection({
                             </div>
                         ) : (
                             <Panel variant="inset" className="text-center py-8">
-                                <ListChecks className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                                <ListChecks className="size-10 text-muted-foreground mx-auto mb-3" />
                                 <p className="text-sm text-muted-foreground">
                                     No summary yet. Click &quot;Summarize&quot;
                                     to generate one.
