@@ -57,43 +57,77 @@ const STORAGE_KEY = "openplaud_last_sync";
  * each try to sync on mount / visibility-change; without coordination they
  * fan out into N concurrent server calls, each of which on hosted is one
  * round-trip through the Webshare residential proxy. The first tab to start
- * a sync writes `{ startedAt }` here; sibling tabs see a recent stamp and
- * skip their own call. Self-expiring after IN_FLIGHT_TTL_MS so a crashed
- * tab can't permanently block sync for the rest.
+ * a sync writes a token here; sibling tabs see a recent stamp and skip
+ * their own call. Self-expiring after IN_FLIGHT_TTL_MS so a crashed tab
+ * can't permanently block sync for the rest.
+ *
+ * Stamp format: `${startedAtMs}:${token}` where token is a unique per-call
+ * random string. The clearing side checks the current stored value still
+ * matches its own token before deleting -- otherwise a TOCTOU race between
+ * two tabs that both passed the read-then-write check could see the first
+ * tab to finish wipe a stamp that another tab is still relying on.
  */
 const IN_FLIGHT_KEY = "openplaud_sync_in_progress";
 const IN_FLIGHT_TTL_MS = 90_000;
 /** Floor between manual button taps. Stops rage-clicking before it hits the API. */
 const MANUAL_MIN_INTERVAL_MS = 5_000;
 
+function parseStamp(
+    raw: string | null,
+): { startedAt: number; token: string } | null {
+    if (!raw) return null;
+    const sep = raw.indexOf(":");
+    // Back-compat with the previous bare-timestamp format: treat a numeric
+    // body as a stamp with an empty token. The mismatch-on-clear check
+    // below will then refuse to delete it (empty token never matches a
+    // real one), and TTL will expire it instead. Safer than racing.
+    const startedAtStr = sep === -1 ? raw : raw.slice(0, sep);
+    const token = sep === -1 ? "" : raw.slice(sep + 1);
+    const startedAt = Number.parseInt(startedAtStr, 10);
+    if (!Number.isFinite(startedAt)) return null;
+    return { startedAt, token };
+}
+
 function readInFlightStamp(): number | null {
     try {
-        const raw = localStorage.getItem(IN_FLIGHT_KEY);
-        if (!raw) return null;
-        const parsed = Number.parseInt(raw, 10);
-        if (!Number.isFinite(parsed)) return null;
-        if (Date.now() - parsed > IN_FLIGHT_TTL_MS) return null;
-        return parsed;
+        const parsed = parseStamp(localStorage.getItem(IN_FLIGHT_KEY));
+        if (!parsed) return null;
+        if (Date.now() - parsed.startedAt > IN_FLIGHT_TTL_MS) return null;
+        return parsed.startedAt;
     } catch {
         // SSR / private mode / storage quota — fall through to no-stamp.
         return null;
     }
 }
 
-function writeInFlightStamp(): void {
+function writeInFlightStamp(token: string): void {
     try {
-        localStorage.setItem(IN_FLIGHT_KEY, Date.now().toString());
+        localStorage.setItem(IN_FLIGHT_KEY, `${Date.now()}:${token}`);
     } catch {
         // Ignore — best-effort cross-tab signal.
     }
 }
 
-function clearInFlightStamp(): void {
+/**
+ * Remove the stamp ONLY if it still carries our token. Prevents one tab
+ * from wiping another tab's active lock if both raced past the read check
+ * (TOCTOU). A stamp written by a sibling tab is left alone so its own TTL
+ * (or its own clear-on-finish) decides when to drop it.
+ */
+function clearInFlightStampIfOwned(token: string): void {
     try {
-        localStorage.removeItem(IN_FLIGHT_KEY);
+        const parsed = parseStamp(localStorage.getItem(IN_FLIGHT_KEY));
+        if (parsed && parsed.token === token) {
+            localStorage.removeItem(IN_FLIGHT_KEY);
+        }
     } catch {
         // Ignore.
     }
+}
+
+function newSyncToken(): string {
+    // Math.random is plenty here -- this is a non-security collision tag.
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 export function useAutoSync(options: UseAutoSyncOptions = {}) {
@@ -173,8 +207,9 @@ export function useAutoSync(options: UseAutoSyncOptions = {}) {
                 return;
             }
 
+            const token = newSyncToken();
             isSyncingRef.current = true;
-            writeInFlightStamp();
+            writeInFlightStamp(token);
             setStatus((prev) => ({ ...prev, isAutoSyncing: true }));
 
             try {
@@ -254,7 +289,7 @@ export function useAutoSync(options: UseAutoSyncOptions = {}) {
                 }
             } finally {
                 isSyncingRef.current = false;
-                clearInFlightStamp();
+                clearInFlightStampIfOwned(token);
                 setStatus((prev) => ({
                     ...prev,
                     isAutoSyncing: false,
