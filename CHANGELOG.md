@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Rybbit analytics proxy 404'd in hosted mode: every URL under `/api/_int/*` (script.js, replay.js, track, identify, tracking-config, session-replay) returned the prerendered App Router 404 page even though the route handlers existed and `IS_HOSTED` + `RYBBIT_HOST` + `RYBBIT_SITE_ID` were set. Cause: the route folder was named `_int`, and App Router treats any folder prefixed with `_` as a private folder excluded from the route manifest, so the URLs were never registered. The handler unit tests passed because they imported the route module directly and bypassed the router. Renamed `src/app/api/_int/` to `src/app/api/int/` and added a regression test that scans `src/app/` for `_`-prefixed folders containing `route.{ts,tsx,js}`. Self-host is unaffected — the proxy is hosted-only and renders nothing under `<RybbitAnalytics>` without `IS_HOSTED=true`.
+
 ### Added
 - `PLAUD_PROXY_SCOPE` env var (`all` default | `api-only`) controlling whether `resource.plaud.ai` signed-URL audio downloads go through the Webshare residential proxy. Audio bytes dominate proxy bandwidth; operators who verify `resource.plaud.ai` serves direct from their egress IPs (via `scripts/plaud-egress-probe.sh`) can flip to `api-only` and save most of the Webshare quota without affecting API correctness. Default `all` preserves existing behavior.
 - `PLAUD_SYNC_RATE_LIMIT_PER_MINUTE` env var (default 10) capping per-user sync requests. Backstops the new client-side throttling at the route boundary so a script hammering `POST /api/plaud/sync` is rejected before any Plaud or Webshare call is issued.
