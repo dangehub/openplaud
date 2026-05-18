@@ -1,19 +1,28 @@
 /**
- * Regression test for the Rybbit analytics proxy 404 bug:
- *   https://openplaud.com/api/int/script.js returned 404 even though
- *   IS_HOSTED + RYBBIT_HOST + RYBBIT_SITE_ID were set on the host.
+ * Regression tests for the runtime contract of the Rybbit analytics
+ * proxy route handlers. There have been two distinct 404 regressions
+ * on these endpoints, both surfaced as 404 at `openplaud.com` despite
+ * `IS_HOSTED` + `RYBBIT_HOST` + `RYBBIT_SITE_ID` being set:
  *
- * Root cause: `next.config.ts` `rewrites()` is evaluated at `next build`.
- * The published Docker image (`ghcr.io/openplaud/openplaud:*`) is built
- * generically without those env vars, so the rewrite list was baked as
- * `[]` and never reinstated at runtime. <RybbitAnalytics> reads env at
- * request time and emitted <script src="/api/int/script.js"> anyway -> 404.
+ *   1. Original (#127): the proxy lived in `next.config.ts` as a
+ *      `rewrites()` entry. Rewrites are baked at `next build`; the
+ *      published Docker image is built generically without those env
+ *      vars, so the rewrite list shipped empty and `/api/_int/*` 404'd
+ *      at runtime. Fixed by moving the proxy to runtime route handlers
+ *      that read `env` at request time.
  *
- * Fix: replace the build-time rewrites with runtime route handlers under
- * src/app/api/int/* that read env at request time, in lockstep with the
- * component's render gate.
+ *   2. Private-folder (PR introducing this file's rename): the route
+ *      folder was named `_int`. App Router treats any folder prefixed
+ *      with `_` as a private folder and excludes it from the route
+ *      manifest, so every `/api/_int/*` path silently 404'd via the
+ *      prerendered App Router not-found page. This suite did not catch
+ *      it because the tests import the route module directly and
+ *      bypass the router. Fixed by renaming the folder to `int/`; the
+ *      `rybbit-int-route-reachable.test.ts` companion test guards the
+ *      class of bug.
  *
- * This test verifies the runtime contract for those handlers:
+ * This file verifies the per-handler runtime contract once the URL is
+ * reachable:
  *   - unconfigured (RYBBIT_HOST or RYBBIT_SITE_ID missing) -> 404
  *   - configured -> proxies to ${RYBBIT_HOST}/api/{script.js,track,identify}
  *     with body forwarded and (for events) client IP / UA preserved.

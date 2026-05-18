@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 // The Rybbit analytics proxy used to live here as a `rewrites()` entry.
 // `next.config.ts` is evaluated at `next build`, and the published Docker
 // image is built generically without `IS_HOSTED`/`RYBBIT_*` set, so the
-// rewrite list was baked as `[]` and `/api/int/*` 404'd at runtime even
+// rewrite list was baked as `[]` and `/api/_int/*` 404'd at runtime even
 // when those vars were configured on the host. The proxy now lives as
 // runtime route handlers under `src/app/api/int/*` which read `env` at
 // request time, in lockstep with `<RybbitAnalytics>`'s render gate.
@@ -12,7 +12,8 @@ import type { NextConfig } from "next";
 // Folder name note: route folder is `int`, NOT `_int`. App Router treats
 // `_`-prefixed folders as private and excludes them from the route
 // manifest, which silently 404'd every `/api/_int/*` path via the
-// prerendered not-found page.
+// prerendered not-found page — a separate regression from the
+// build-time-rewrites one above.
 const nextConfig: NextConfig = {
     output: "standalone",
     // `wreq-js` is a Rust napi addon used by `src/lib/plaud/fetch.ts` to

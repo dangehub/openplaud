@@ -26,7 +26,7 @@ let warnedMisconfig = false;
  * `_int`. App Router treats any folder prefixed with `_` as a private
  * folder and excludes it from the route manifest, so `/api/_int/*`
  * silently 404'd via the prerendered not-found page in production. See
- * `src/tests/regressions/<issue>-rybbit-int-route-reachable.test.ts`.
+ * `src/tests/regressions/rybbit-int-route-reachable.test.ts`.
  */
 export function RybbitAnalytics() {
     if (!env.IS_HOSTED) return null;
