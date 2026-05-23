@@ -41,6 +41,7 @@ const ISSUE_URL = "https://github.com/openplaud/openplaud/issues/65";
 function regionLabel(base: string): string {
     if (base.includes("euc1")) return "EU (Frankfurt)";
     if (base.includes("apse1")) return "Asia Pacific (Singapore)";
+    if (base.includes("plaud.cn")) return "China";
     if (base.includes("api.plaud.ai")) return "Global";
     return base;
 }
@@ -538,8 +539,8 @@ function PasteTokenPane({
         <div className="space-y-4">
             <p className="text-xs text-muted-foreground leading-relaxed">
                 For accounts created via Google or Apple sign-in. Paste the
-                access token from a logged-in web.plaud.ai session and we'll
-                connect it directly.{" "}
+                access token from a logged-in web.plaud.ai (or web.plaud.cn for
+                China accounts) session and we'll connect it directly.{" "}
                 <a
                     href={ISSUE_URL}
                     target="_blank"
@@ -581,7 +582,8 @@ function PasteTokenPane({
                 )}
                 <p className="text-xs text-muted-foreground">
                     Look at the host of any{" "}
-                    <span className="font-mono">api*.plaud.ai</span> request in
+                    <span className="font-mono">api*.plaud.ai</span> (or{" "}
+                    <span className="font-mono">api.plaud.cn</span>) request in
                     your devtools Network tab to find the region.
                 </p>
             </div>
@@ -625,18 +627,26 @@ function PasteTokenPane({
                         >
                             web.plaud.ai
                         </a>{" "}
-                        in another tab and sign in (Google, Apple, or email).
+                        (or{" "}
+                        <a
+                            href="https://web.plaud.cn"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline decoration-dotted underline-offset-2"
+                        >
+                            web.plaud.cn
+                        </a>{" "}
+                        for China) in another tab and sign in.
                     </li>
                     <li>
                         Open browser devtools (F12 / Cmd+Option+I) →{" "}
                         <span className="font-medium">Network</span> tab.
                     </li>
                     <li>
-                        Refresh web.plaud.ai. Click any request to a host
-                        starting with <span className="font-mono">api</span>
-                        <span className="font-mono">.plaud.ai</span> or{" "}
-                        <span className="font-mono">api-euc1.plaud.ai</span>{" "}
-                        etc.
+                        Refresh the page. Click any request to a host starting
+                        with <span className="font-mono">api.plaud.ai</span>,{" "}
+                        <span className="font-mono">api-euc1.plaud.ai</span>, or{" "}
+                        <span className="font-mono">api.plaud.cn</span>.
                     </li>
                     <li>
                         Under <span className="font-medium">Headers</span> →{" "}

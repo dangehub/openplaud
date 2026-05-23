@@ -275,10 +275,17 @@ describe("PlaudClient", () => {
             expect(isValidPlaudApiUrl("https://api-usw1.plaud.ai")).toBe(true);
         });
 
+        it("should accept valid plaud.cn HTTPS URLs", () => {
+            expect(isValidPlaudApiUrl("https://api.plaud.cn")).toBe(true);
+            expect(isValidPlaudApiUrl("https://plaud.cn")).toBe(true);
+        });
+
         it("should reject non-plaud domains", () => {
             expect(isValidPlaudApiUrl("https://evil.com")).toBe(false);
             expect(isValidPlaudApiUrl("https://plaud.ai.evil.com")).toBe(false);
+            expect(isValidPlaudApiUrl("https://plaud.cn.evil.com")).toBe(false);
             expect(isValidPlaudApiUrl("https://notplaud.ai")).toBe(false);
+            expect(isValidPlaudApiUrl("https://notplaud.cn")).toBe(false);
         });
 
         it("should reject non-HTTPS URLs", () => {
@@ -300,6 +307,7 @@ describe("PlaudClient", () => {
             expect(serverKeyFromApiBase("https://api-apse1.plaud.ai")).toBe(
                 "apse1",
             );
+            expect(serverKeyFromApiBase("https://api.plaud.cn")).toBe("cn");
         });
 
         it("should return 'custom' for unknown URLs", () => {

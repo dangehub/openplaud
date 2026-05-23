@@ -19,6 +19,11 @@ export const PLAUD_SERVERS = {
             "Asia Pacific server — used by APAC accounts (api-apse1.plaud.ai)",
         apiBase: "https://api-apse1.plaud.ai",
     },
+    cn: {
+        label: "China (api.plaud.cn)",
+        description: "China server — used by plaud.cn accounts (api.plaud.cn)",
+        apiBase: "https://api.plaud.cn",
+    },
     custom: {
         label: "Custom",
         description:
@@ -30,14 +35,16 @@ export const PLAUD_SERVERS = {
 export type PlaudServerKey = keyof typeof PLAUD_SERVERS;
 export const DEFAULT_SERVER_KEY: PlaudServerKey = "global";
 
-/** HTTPS + plaud.ai-subdomain check. */
+/** HTTPS + plaud.ai/plaud.cn-subdomain check. */
 export function isValidPlaudApiUrl(url: string): boolean {
     try {
         const parsed = new URL(url);
         return (
             parsed.protocol === "https:" &&
             (parsed.hostname === "plaud.ai" ||
-                parsed.hostname.endsWith(".plaud.ai"))
+                parsed.hostname.endsWith(".plaud.ai") ||
+                parsed.hostname === "plaud.cn" ||
+                parsed.hostname.endsWith(".plaud.cn"))
         );
     } catch {
         return false;

@@ -55,9 +55,16 @@ export function shouldProxyPlaud(url: string): boolean {
         const u = new URL(url);
         if (u.protocol !== "https:") return false;
         const h = u.hostname.toLowerCase();
-        const isPlaud = h === "plaud.ai" || h.endsWith(".plaud.ai");
+        const isPlaud =
+            h === "plaud.ai" ||
+            h.endsWith(".plaud.ai") ||
+            h === "plaud.cn" ||
+            h.endsWith(".plaud.cn");
         if (!isPlaud) return false;
-        if (env.PLAUD_PROXY_SCOPE === "api-only" && h === "resource.plaud.ai") {
+        if (
+            env.PLAUD_PROXY_SCOPE === "api-only" &&
+            (h === "resource.plaud.ai" || h === "resource.plaud.cn")
+        ) {
             return false;
         }
         return true;
