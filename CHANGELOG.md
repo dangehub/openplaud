@@ -7,7 +7,11 @@
 - `PLAUD_SYNC_RATE_LIMIT_PER_MINUTE` env var (default 10) capping per-user sync requests. Backstops the new client-side throttling at the route boundary so a script hammering `POST /api/plaud/sync` is rejected before any Plaud or Webshare call is issued.
 
 ### Changed
-- Sync flow now coalesces concurrent calls for the same user inside one Next.js worker into a single Plaud round-trip; secondary callers receive the same result with an `inProgress: true` marker and the client renders it as a quiet no-op (no extra `router.refresh()`, no duplicate toast). Combined with a new client-side cross-tab `localStorage` in-flight stamp (90s TTL) and a 5s floor on manual sync taps, this collapses N-tab fan-out and rage-clicks before they reach the API. Reduces Webshare proxy load on hosted by suppressing redundant runs that were previously paginating Plaud and re-downloading recordings through the proxy.
+- `WEBSHARE_API_KEY` proxy path now uses native `fetch` through `undici.ProxyAgent` instead of the previous `wreq-js` dependency. Drops a Rust napi addon from the standalone Docker image and removes the Turbopack workaround in `next.config.ts`. No behavioral change for proxy users; direct-egress path unchanged.
+- Sync flow now coalesces concurrent calls for the same user inside one Next.js worker into a single Plaud round-trip; secondary callers receive the same result with an `inProgress: true` marker and the client renders it as a quiet no-op (no extra `router.refresh()`, no duplicate toast). Combined with a new client-side cross-tab `localStorage` in-flight stamp (90s TTL) and a 5s floor on manual sync taps, this collapses N-tab fan-out and rage-clicks before they reach the API.
+
+### Removed
+- `wreq-js` dependency.
 
 ## [0.5.3] - 2026-05-15
 
