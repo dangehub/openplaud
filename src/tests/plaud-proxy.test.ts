@@ -24,6 +24,9 @@ vi.mock("undici", () => ({
         constructor(opts: unknown) {
             mockProxyAgent.ctor(opts);
         }
+        close(): Promise<void> {
+            return Promise.resolve();
+        }
     },
 }));
 

@@ -7,6 +7,25 @@ import {
 } from "./proxy";
 
 const MAX_PROXY_ROTATIONS = 1;
+const PLAUD_WEB_ORIGIN = "https://web.plaud.ai";
+
+const agentCache = new Map<string, ProxyAgent>();
+
+function getOrCreateAgent(proxy: SelectedProxy): ProxyAgent {
+    let agent = agentCache.get(proxy.id);
+    if (!agent) {
+        agent = new ProxyAgent({ uri: proxy.url });
+        agentCache.set(proxy.id, agent);
+    }
+    return agent;
+}
+
+function evictAgent(proxyId: string): void {
+    const agent = agentCache.get(proxyId);
+    if (!agent) return;
+    agentCache.delete(proxyId);
+    agent.close().catch(() => undefined);
+}
 
 /**
  * `fetch`-shaped wrapper. When `WEBSHARE_API_KEY` is configured and the URL
@@ -27,11 +46,11 @@ export async function plaudFetch(
         return fetch(url, init);
     }
 
-    const headers = mergeBrowserHeaders(url, init?.headers);
+    const headers = mergeBrowserHeaders(init?.headers);
 
     let attempt = 0;
     while (true) {
-        const dispatcher = new ProxyAgent({ uri: currentProxy.url });
+        const dispatcher = getOrCreateAgent(currentProxy);
         let response: Response;
         try {
             response = await fetch(url, {
@@ -48,6 +67,7 @@ export async function plaudFetch(
                     currentProxy.label,
                     err instanceof Error ? err.message : String(err),
                 );
+                evictAgent(currentProxy.id);
                 invalidatePlaudProxy(currentProxy);
                 const next = await getPlaudProxyUrl();
                 if (!next) return fetch(url, init);
@@ -68,6 +88,7 @@ export async function plaudFetch(
                 currentProxy.label,
                 response.statusText,
             );
+            evictAgent(currentProxy.id);
             invalidatePlaudProxy(currentProxy);
 
             const next = await getPlaudProxyUrl();
@@ -86,18 +107,8 @@ export async function plaudFetch(
  * Layer browser-shaped headers under the caller's headers in insertion order.
  * Caller-provided headers always win.
  */
-function mergeBrowserHeaders(
-    url: string,
-    callerHeaders: HeadersInit | undefined,
-): Headers {
+function mergeBrowserHeaders(callerHeaders: HeadersInit | undefined): Headers {
     const out = new Headers();
-    let origin = "https://web.plaud.ai";
-    try {
-        const u = new URL(url);
-        if (u.hostname === "resource.plaud.ai") origin = "https://web.plaud.ai";
-    } catch {
-        // fall through with default
-    }
 
     out.append(
         "sec-ch-ua",
@@ -110,11 +121,11 @@ function mergeBrowserHeaders(
         "user-agent",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
     );
-    out.append("origin", origin);
+    out.append("origin", PLAUD_WEB_ORIGIN);
     out.append("sec-fetch-site", "same-site");
     out.append("sec-fetch-mode", "cors");
     out.append("sec-fetch-dest", "empty");
-    out.append("referer", `${origin}/`);
+    out.append("referer", `${PLAUD_WEB_ORIGIN}/`);
     out.append("accept-encoding", "gzip, deflate, br, zstd");
     out.append("accept-language", "en-US,en;q=0.9");
     out.append("priority", "u=1, i");
@@ -145,5 +156,10 @@ function logProxyEvent(
     );
 }
 
-/** Test-only no-op. */
-export function _resetPlaudFetchForTest(): void {}
+/** Test-only: close and clear cached proxy agents. */
+export function _resetPlaudFetchForTest(): void {
+    for (const agent of agentCache.values()) {
+        agent.close().catch(() => undefined);
+    }
+    agentCache.clear();
+}
