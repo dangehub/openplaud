@@ -27,8 +27,9 @@ function today(): string {
  * (only the hosted instance is a meaningful aggregator), and any DB error
  * is swallowed -- the install script must serve even if the DB is down.
  *
- * Callers do not need to await this in a way that blocks the response;
- * it's safe to fire-and-forget.
+ * Callers MUST `await` this. Serverless runtimes can kill pending promises
+ * after response flush, silently dropping increments. The upsert is
+ * sub-5ms; the helper is a no-op on self-host anyway.
  */
 export async function recordInstallHit(rawVersion: string): Promise<void> {
     if (!env.IS_HOSTED) return;
@@ -67,7 +68,10 @@ export async function getInstallHitStats(
     if (!env.IS_HOSTED) {
         return { total: 0, distinctVersions: 0, topVersions: [] };
     }
-    const since = new Date(Date.now() - days * 86_400_000)
+    // `days` is inclusive of today: a 30-day window covers today plus the
+    // 29 preceding UTC days = 30 distinct date buckets. Subtracting
+    // `days * DAY_MS` and slicing would include 31 buckets (off-by-one).
+    const since = new Date(Date.now() - (days - 1) * 86_400_000)
         .toISOString()
         .slice(0, 10);
 

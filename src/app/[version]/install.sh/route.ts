@@ -14,11 +14,11 @@ export async function GET(
 ) {
     const { version } = await params;
     if (!isValidVersionTag(version)) {
-        // Still record the attempt so we can see if junk paths are getting
-        // hammered, bucketed as "invalid" by recordInstallHit. Awaited
-        // because serverless runtimes kill pending promises after response
-        // flush -- losing increments.
-        await recordInstallHit(version);
+        // Record the attempt so we can see if junk paths are getting
+        // hammered. Force the "invalid" bucket explicitly -- the raw
+        // segment might match a special bucket name (e.g. "latest")
+        // and falsely inflate that bucket even though we 404'd here.
+        await recordInstallHit("invalid");
         return NextResponse.json(
             { error: "Invalid version tag. Expected vX.Y.Z." },
             { status: 404 },

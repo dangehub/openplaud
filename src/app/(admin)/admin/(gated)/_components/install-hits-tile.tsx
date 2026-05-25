@@ -27,6 +27,14 @@ export async function InstallHitsTile({ days = 30 }: { days?: number }) {
             </div>
             {stats.topVersions.length > 0 ? (
                 <table className="w-full mt-3 text-xs">
+                    <thead>
+                        <tr className="text-left text-muted-foreground">
+                            <th className="py-1 font-medium">Version</th>
+                            <th className="py-1 font-medium text-right">
+                                Hits
+                            </th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {stats.topVersions.map((row) => (
                             <tr key={row.version} className="border-t">
