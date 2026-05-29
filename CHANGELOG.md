@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.5.4] - 2026-05-29
 
 ### Added
 - `PLAUD_PROXY_SCOPE` env var (`all` default | `api-only`) controlling whether `resource.plaud.ai` signed-URL audio downloads go through the Webshare residential proxy. Audio bytes dominate proxy bandwidth; operators who verify `resource.plaud.ai` serves direct from their egress IPs (via `scripts/plaud-egress-probe.sh`) can flip to `api-only` and save most of the Webshare quota without affecting API correctness. Default `all` preserves existing behavior.
