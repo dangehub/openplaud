@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Github, X } from "@/components/icons/icons";
 import { LogoWordmark } from "@/components/icons/logo";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Marketing footer for hosted public surfaces. Currently mounted on:
@@ -109,6 +112,7 @@ function FooterLinkItem({ label, href, external }: FooterLink) {
 }
 
 export function LandingFooter() {
+    const { t } = useTranslation();
     const currentYear = new Date().getFullYear();
 
     return (
@@ -126,9 +130,7 @@ export function LandingFooter() {
                             <LogoWordmark className="h-7 w-auto" />
                         </Link>
                         <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-                            Open-source transcription for the voice recorder you
-                            already own. Your recordings, your transcripts,
-                            yours to keep.
+                            {t("landing.footer.desc")}
                         </p>
                         <div className="flex items-center gap-3 mt-1">
                             <Link
@@ -178,14 +180,14 @@ export function LandingFooter() {
                     the bottom of the page. */}
                 <div className="mt-16 pt-6 border-t border-border/40 flex flex-col gap-6">
                     <p className="text-xs text-muted-foreground/80 leading-relaxed max-w-2xl">
-                        Riffado is not HIPAA or SOC 2 certified. For regulated
-                        work, self-host and plug in an AI provider that signs a
-                        BAA you&apos;ve reviewed, or run a local model that
-                        never leaves your machine.
+                        {t("landing.footer.compliance")}
                     </p>
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <p className="text-xs text-muted-foreground font-mono">
-                            © {currentYear} Riffado. Licensed under{" "}
+                            {t("landing.footer.copyright").replace(
+                                "{year}",
+                                String(currentYear),
+                            )}{" "}
                             <Link
                                 href="https://www.gnu.org/licenses/agpl-3.0.html"
                                 target="_blank"
@@ -197,7 +199,7 @@ export function LandingFooter() {
                             .
                         </p>
                         <p className="text-xs text-muted-foreground/70 font-mono">
-                            Built in the open on{" "}
+                            {t("landing.footer.builtInOpen")}{" "}
                             <Link
                                 href="https://github.com/riffado/riffado"
                                 target="_blank"

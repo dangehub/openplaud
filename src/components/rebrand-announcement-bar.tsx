@@ -3,6 +3,7 @@
 import { ArrowRight, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 const STORAGE_KEY = "riffado:rebrand:announcement";
 const EXPIRES_AT = new Date("2026-07-28T00:00:00Z");
@@ -29,6 +30,7 @@ const EXPIRES_AT = new Date("2026-07-28T00:00:00Z");
  * redirects them to `/dashboard`; the in-app banner covers them.
  */
 export function RebrandAnnouncementBar() {
+    const { t } = useTranslation();
     const [dismissed, setDismissed] = useState(false);
 
     useEffect(() => {
@@ -47,16 +49,18 @@ export function RebrandAnnouncementBar() {
 
     return (
         <section
-            aria-label="Announcement"
+            aria-label={t("landing.announcement.label")}
             className="relative border-b border-primary/20 bg-primary/8 text-foreground"
         >
             <div className="container mx-auto px-4 py-2.5 pr-12 flex items-center justify-center gap-2 text-sm text-pretty">
-                <span className="font-medium">OpenPlaud is now Riffado.</span>
+                <span className="font-medium">
+                    {t("landing.announcement.text")}
+                </span>
                 <Link
                     href="/rebrand"
                     className="inline-flex items-center gap-1 text-foreground/80 hover:text-foreground transition-colors underline decoration-dotted underline-offset-2"
                 >
-                    Read more
+                    {t("landing.announcement.readMore")}
                     <ArrowRight className="size-3.5" aria-hidden />
                 </Link>
             </div>
@@ -71,7 +75,7 @@ export function RebrandAnnouncementBar() {
                         // simply reappears next visit. Acceptable.
                     }
                 }}
-                aria-label="Dismiss announcement"
+                aria-label={t("landing.announcement.dismiss")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center size-7 rounded text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
             >
                 <X className="size-4" aria-hidden />

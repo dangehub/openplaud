@@ -1,18 +1,18 @@
+"use client";
+
 import { LogoWordmark } from "@/components/icons/logo";
 import { FinalCtaActions } from "@/components/landing/final-cta-actions";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Page closer rendered on the theme-stable `bg-auth-brand` surface --
  * mirrors the brand panel from the hosted auth chrome so the landing
  * bookends with the same dark warm-sepia surface the user lands on
  * after they click through to sign in.
- *
- * Wordmark → headline (with `text-primary` accent on the tail, mirroring
- * the hero) → tightened ownership-led subhead → CTA pair (same two paths
- * the hero opens with: hosted `/register` + self-host `/install`) →
- * reassurance strip condensing the slice-1 + slice-2 promise.
  */
 export function FinalCTA() {
+    const { t } = useTranslation();
+
     return (
         <section
             id="get-started"
@@ -41,13 +41,14 @@ export function FinalCTA() {
                     />
 
                     <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-balance">
-                        Stop renting{" "}
-                        <span className="text-primary">your own voice.</span>
+                        {t("landing.finalCta.titlePre")}
+                        <span className="text-primary">
+                            {t("landing.finalCta.titleAccent")}
+                        </span>
                     </h2>
 
                     <p className="text-auth-brand-foreground/70 text-lg leading-relaxed max-w-xl mx-auto">
-                        Your recordings, your transcripts, your AI. Yours to
-                        keep.
+                        {t("landing.finalCta.desc")}
                     </p>
 
                     <FinalCtaActions />

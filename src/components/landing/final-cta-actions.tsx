@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { MetalButton } from "@/components/metal-button";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Rybbit `window.rybbit.event(name, props?)` shape. The script is loaded
@@ -30,21 +31,8 @@ function track(name: string, props?: Record<string, unknown>) {
     }
 }
 
-/**
- * Client island for the page-closer CTA pair. Parallels `HeroReveal`
- * but without the staggered reveal or sticky-mobile sentinel -- by the
- * time a visitor reaches the final CTA they've already scrolled the
- * full page, so no entrance animation and no sticky bar.
- *
- * Fires:
- *   - `final_cta_view` once, when the CTA row scrolls into view
- *     (IntersectionObserver, threshold 0.4) -- mount-time tracking
- *     would fire on every page load since this island hydrates with
- *     the page, making the event indistinguishable from page-view
- *   - `final_cta_primary_click` on Start free
- *   - `final_cta_self_host_click` on the self-host link
- */
 export function FinalCtaActions() {
+    const { t } = useTranslation();
     const rootRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -79,23 +67,21 @@ export function FinalCtaActions() {
             >
                 <Link
                     href="/register"
-                    aria-label="Start Riffado free — no card required"
+                    aria-label={t("landing.finalCta.ctaAria")}
                     onClick={() =>
                         track("final_cta_primary_click", {
                             location: "final_cta",
                         })
                     }
                 >
-                    <span>Start free</span>
+                    <span>{t("landing.finalCta.cta")}</span>
                     <ArrowRight className="size-4" />
                 </Link>
             </MetalButton>
 
-            {/* Mirrors the hero's secondary action verbatim so the page
-                opens and closes on the same two paths. */}
             <Link
                 href="/install"
-                aria-label="Self-host Riffado in one command"
+                aria-label={t("landing.finalCta.selfhostAria")}
                 onClick={() =>
                     track("final_cta_self_host_click", {
                         location: "final_cta",
@@ -103,7 +89,7 @@ export function FinalCtaActions() {
                 }
                 className="group inline-flex items-center justify-center gap-1.5 text-sm font-medium text-auth-brand-foreground/60 hover:text-auth-brand-foreground transition-colors"
             >
-                <span>or self-host in one command</span>
+                <span>{t("landing.finalCta.selfhost")}</span>
                 <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
         </div>

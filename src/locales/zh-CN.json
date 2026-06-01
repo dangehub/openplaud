@@ -1,0 +1,316 @@
+{
+    "common": {
+        "save": "保存",
+        "cancel": "取消",
+        "delete": "删除",
+        "edit": "编辑",
+        "loading": "加载中...",
+        "success": "成功",
+        "error": "错误",
+        "language": "语言",
+        "back": "返回",
+        "next": "下一步",
+        "confirm": "确认",
+        "close": "关闭",
+        "logout": "退出登录",
+        "login": "登录",
+        "register": "注册",
+        "words": "词",
+        "characters": "字符",
+        "search": "搜索",
+        "upload": "上传",
+        "uploading": "正在上传..."
+    },
+    "landing": {
+        "title": "OpenPlaud / Riffado (中国区支持版)",
+        "subtitle": "录音设备的开源 AI 语音转写与整理伴侣",
+        "desc": "用自己低成本的 OpenAI 兼容 API 密钥，替代昂贵的官方 AI 订阅服务。支持自托管或托管服务。",
+        "getStarted": "快速开始",
+        "docs": "官方文档",
+        "discord": "加入 Discord",
+        "rebrandNote": "OpenPlaud 现已更名为 Riffado！开源项目正在积极迭代开发中。",
+        "announcement": {
+            "label": "公告",
+            "text": "OpenPlaud 现已更名为 Riffado。",
+            "readMore": "了解更多",
+            "dismiss": "关闭公告"
+        },
+        "featureTitle": "为什么选择 Riffado？",
+        "featureSubtitle": "完全掌控您的录音、转写数据和 AI 密钥。",
+        "features": {
+            "privacy": "隐私与完全控制",
+            "privacyDesc": "在您自己的基础设施上私有化部署。所有凭证在数据库中均通过 AES-256-GCM 进行静态加密存储。",
+            "pluggable": "无供应商锁定",
+            "pluggableDesc": "支持任何兼容 OpenAI 协议的 AI 提供商（如 DeepSeek、通义千问、Groq、Ollama）或兼容 S3 的对象存储。",
+            "browser": "零成本浏览器转录",
+            "browserDesc": "在浏览器本地通过 WebAssembly 运行 Whisper (Transformers.js) 进行转录，完全零 API 费用，保护绝对隐私。"
+        },
+        "featuresSection": {
+            "title": "围绕您现有的录音设备，构建您的专属智能工作站。",
+            "desc": "您的录音笔照常工作。而 Riffado 将从音频文件离开设备的那一刻起，接手后续的一切 —— 帮您自由搭配 AI 引擎、选择您信任的存储器并完全私有化私有化部署。",
+            "howItWorks": "运作原理",
+            "footerNote": "完全免费的本地浏览器 Whisper 转写，或绑定 OpenAI/Groq 等 API 并直接按量向他们付费。",
+            "b1": {
+                "title": "一次登录，永久自动同步。",
+                "body": "直接使用您在录音设备 App 上绑定的邮箱登录 —— Riffado 将向您发送登录验证码。此后，所有新录音都会在后台自动同步到您的系统中，并且在转录完成后向您发送报警通知。"
+            },
+            "b2": {
+                "title": "自选 AI，秒出精准转录与大纲。",
+                "body": "支持使用 OpenAI 或 Groq 进行高速转写，并绑定 Anthropic 等模型用于智能总结 —— 费用直接由您向 AI 提供商支付，无中间商差价。无任何 API 密钥？可在浏览器中免费且极其私密地运行 Whisper 引擎，每条录音均能得到完美的大纲、核心要点与行动待办。"
+            },
+            "b3": {
+                "title": "全局搜索、无缝收听、自由分发。",
+                "body": "播放器与转写文本并排陈列。全局检索您录音过的每一个字。一键将您的转写发送至 Notion、Obsidian，或将音频素材拉入您的剪辑软件，更支持一键打包备份全部数据。100% 完整开源。"
+            }
+        },
+        "deploy": {
+            "eyebrow": "如果您更倾向于自托管部署",
+            "title": "单行命令，您的专属服务器，永久归您所有。",
+            "desc": "Riffado 支持一键以 Docker Compose 容器组形式部署运行 —— 包括主程序、数据库及独立文件存储。您可以通过一键数据打包备份，随时在自托管和托管云服务之间无损迁移数据。完全相同的一套开源源码，为您所用。",
+            "action": "立即使用 Docker 部署 →",
+            "installerOutput": "安装程序输出",
+            "output1": "验证通过 Docker 及 Compose v2",
+            "output2": "配置写入 .env 文件（已自动生成安全密钥）",
+            "output3": "成功拉取 riffado-web, riffado-db 镜像",
+            "output4": "本地 /api/health 健康检查运行通过",
+            "points": [
+                "AGPL-3.0 协议 —— GitHub 完整代码开源，绝无任何商业闭源保留",
+                "无任何内置追踪、无回传数据行为、不需要联网的激活授权服务器",
+                "支持本地文件存储，或一键转储至阿里云 OSS、腾讯云 COS、AWS S3、MinIO 等",
+                "可接入任何 OpenAI-compatible 转写服务 —— 或直接在本地运行 Whisper 和 Ollama"
+            ]
+        },
+        "hero": {
+            "titlePart1": "记录您的每一个字词。",
+            "titlePart2": "支持快速搜索、智能总结，完全为您所有。",
+            "desc": "后台自动同步录音，自由选择您信赖的 AI 进行转写 —— 或者在浏览器中免费运行本地 Whisper —— 您的音频存储完全由您掌控。",
+            "startFree": "免费开始使用",
+            "selfHostCmd": "或通过单行命令进行自托管部署"
+        },
+        "footer": {
+            "desc": "基于您已拥有的录音设备，提供开源、自主的 AI 语音转写服务。您的录音，您的转录数据，全部由您完全掌控。",
+            "compliance": "Riffado 本身未通过 HIPAA 或 SOC 2 认证。对于受监管的工作，请采用私有化自托管部署，并接入签署了您已审核的 BAA 协议的 AI 提供商，或者直接运行完全不离开本地机器的本地模型。",
+            "copyright": "© {year} Riffado。采用 AGPL-3.0 开源协议授权。",
+            "builtInOpen": "在 GitHub 上公开构建开发"
+        },
+        "faq": {
+            "title": "加入之前，也许您还有这些疑问。",
+            "subtitle": "坦诚的回答 —— 包括那些看似无聊的细节。",
+            "didntSee": "没有找到您想问的？",
+            "readCode": "阅读开源代码",
+            "or": " 或 ",
+            "openIssue": "提交 Issue 反馈"
+        },
+        "theMath": {
+            "eyebrow": "录音转写计费原理解析",
+            "title": "直接对接底层 AI，不付任何中间商差价。",
+            "desc": "绝大多数语音 AI 服务本身并不进行转录 —— 而是 OpenAI、Groq 或 Deepgram 在提供底层支持。Riffado 帮您直接接入这些底层的 AI 提供商，使用您自己的 API 密钥进行结算。",
+            "workload": "以相同的工作负载计算 · 20 小时音频 (1,200 分钟)",
+            "publishedPricing": "计费标准发布于 2026 年 5 月。相关方案、额度上限及商标归各自所有者所有；在此仅用于客观描述，不作直接对比。Riffado 本身完全免费自托管。",
+            "labels": {
+                "subscriptions": "订阅制商业服务",
+                "riffado": "搭配 Riffado"
+            },
+            "subscriptions": {
+                "plaud": "Plaud Pro",
+                "plaudScope": "每月 1,200 分钟转写额度",
+                "otter": "Otter 商业版",
+                "otterScope": "每月 6,000 分钟转写额度",
+                "rev": "Rev AI 专业版",
+                "revScope": "每月 1,200 分钟转写额度"
+            },
+            "options": {
+                "browser": "Riffado 本地浏览器运行",
+                "browserScope": "通过 Transformers.js 运行本地 Whisper，无需任何密钥",
+                "groq": "Riffado + Groq Whisper",
+                "groqScope": "Groq 按 $0.111 / 小时计费",
+                "openai": "Riffado + OpenAI Whisper",
+                "openaiScope": "OpenAI 按 $0.006 / 分钟计费"
+            }
+        },
+        "forProfessionals": {
+            "eyebrow": "专为专业人士设计",
+            "kicker": "律师 · 记者 · 顾问 · 科研人员",
+            "title": "如果您的对话只留在房间里，那么您的录音也应该如此。",
+            "pillars": {
+                "infrastructure": {
+                    "kicker": "01 / 基础架构",
+                    "headline": "部署在您指定的地方",
+                    "body": "支持本地磁盘、您自己的 S3 存储桶，或我们的托管版本。录音始终存放在您完全控制的存储介质中。"
+                },
+                "source": {
+                    "kicker": "02 / 源码可信",
+                    "headline": "逐行代码可审计",
+                    "body": "Riffado 的每一行代码都采用 AGPL-3.0 协议开源。可读、可分支、可向客户展示其如何保护隐私。"
+                },
+                "ai": {
+                    "kicker": "03 / AI 引擎",
+                    "headline": "自主掌控，支持完全本地运行",
+                    "body": "可通过 Ollama 在本地零延迟运行 Whisper —— 录音文件完全不离开您的本地机器。或接入任何兼容 OpenAI 协议的云端 API。"
+                }
+            },
+            "guide": "阅读自托管部署指南",
+            "source": "阅读开源代码",
+            "contact": "需要完全物理隔离 (Air-gapped) 或企业内部私有化方案？欢迎致信 {email} —— 我会亲自回复。"
+        },
+        "pricing": {
+            "eyebrow": "版本与资费",
+            "title": "选择最适合您的版本",
+            "desc": "完全相同的产品，完全相同的开源代码。唯一的区别在于谁来负责运行服务器 —— 以及您是否希望省去维护的烦恼。",
+            "bottomNote": "Hosted 托管版运行与您可以自托管的完全一致的 AGPL-3.0 开源代码 —— 无任何隐藏的分支或商业闭源插件。{readSourceLink}。您可以随时通过一键数据打包备份，在托管版和自托管版之间无缝迁移。",
+            "readSource": "阅读开源代码",
+            "tiers": {
+                "selfHost": {
+                    "name": "自托管版 (Self-host)",
+                    "price": "免费",
+                    "priceSuffix": "永久",
+                    "tagline": "您的机器，您的数据，您的规则。",
+                    "features": [
+                        "无限制的录音条数与存储容量",
+                        "通过 Docker 在您的笔记本电脑、群晖/NAS 或 VPS 服务器上运行",
+                        "轻松接入 OpenAI、Groq、Ollama —— 或在浏览器本地进行免费转录",
+                        "支持本地硬盘存储，或备份至阿里云 OSS、腾讯云 COS、AWS S3、MinIO 等",
+                        "完整功能，无任何商业化阉割或功能锁"
+                    ],
+                    "cta": "使用 Docker 部署"
+                },
+                "hostedFree": {
+                    "name": "托管免费版 (Hosted Free)",
+                    "price": "$0",
+                    "priceSuffix": "/ 月",
+                    "tagline": "我们帮您运行服务器，您自带 API 密钥。",
+                    "features": [
+                        "自动从您的 Plaud 等录音笔中同步录音",
+                        "在浏览器中完全免费运行 Whisper 进行本地转录",
+                        "接入您自己的 OpenAI 或 Groq API 进行高性价比转录",
+                        "随时一键导出您的全部数据 — 支持 JSON、TXT、SRT、VTT 格式",
+                        "采用与自托管版完全相同的开源代码 (AGPL-3.0)"
+                    ],
+                    "cta": "免费开始使用"
+                },
+                "hostedPro": {
+                    "name": "托管专业版 (Hosted Pro)",
+                    "price": "$5",
+                    "priceSuffix": "/ 月",
+                    "tagline": "免折腾托管服务，由我们来打磨所有细节。",
+                    "features": [
+                        "包含托管免费版的全部功能",
+                        "高优先级的自动同步和后台任务队列",
+                        "异地加密自动备份",
+                        "由项目核心开发团队直接提供邮件技术支持",
+                        "首发抢先体验对更多新录音设备的同步支持"
+                    ],
+                    "cta": "加入等待队列"
+                }
+            }
+        },
+        "finalCta": {
+            "title": "不要再为本就属于您的声音付费。",
+            "titleAccent": "属于您的声音付费。",
+            "titlePre": "不要再为本就",
+            "desc": "您的录音，您的转录数据，您的 AI 密钥。全部完全为您所有。",
+            "cta": "免费开始",
+            "ctaAria": "免费开始使用 Riffado — 无需绑定信用卡",
+            "selfhost": "或通过单行命令进行自托管部署",
+            "selfhostAria": "一键单行命令自托管 Riffado"
+        }
+    },
+    "dashboard": {
+        "sidebar": {
+            "recordings": "录音列表",
+            "trash": "回收站",
+            "settings": "系统设置",
+            "sync": "同步录音",
+            "syncing": "同步中..."
+        },
+        "recordingList": {
+            "searchPlaceholder": "搜索录音...",
+            "empty": "未找到录音。",
+            "emptyDesc": "连接您的 Plaud 账号或上传音频文件以开始使用。",
+            "upload": "上传音频",
+            "duration": "时长",
+            "date": "时间"
+        },
+        "player": {
+            "title": "录音工作台",
+            "waveformTooltip": "在浏览器本地解码声波（可能需要几秒钟）"
+        },
+        "transcription": {
+            "title": "语音转写",
+            "transcribe": "开始转写",
+            "retranscribe": "重新转写",
+            "transcribing": "正在转写音频...",
+            "empty": "暂无转写内容。点击上方“开始转写”按钮启动。",
+            "words": "词",
+            "chars": "字符"
+        },
+        "summary": {
+            "title": "AI 智能总结",
+            "summarize": "开始总结",
+            "regenerate": "重新生成",
+            "generating": "正在生成总结...",
+            "empty": "暂无总结。点击“开始总结”按钮生成。",
+            "collapse": "折叠",
+            "expand": "展开总结内容",
+            "keyPoints": "核心要点",
+            "actionItems": "行动待办",
+            "presets": {
+                "general": "通用总结",
+                "meetingNotes": "会议纪要",
+                "keyPoints": "核心要点",
+                "actionItems": "行动待办"
+            }
+        }
+    },
+    "settings": {
+        "title": "系统设置",
+        "userSettings": "用户设置",
+        "groups": {
+            "ai": "AI 智能对接",
+            "plaud": "录音设备",
+            "personalize": "个性化偏好",
+            "data": "数据中心",
+            "integrations": "接口与集成",
+            "advanced": "高级选项"
+        },
+        "items": {
+            "providers": "AI 提供商 (Providers)",
+            "transcription": "转录设置 (Transcription)",
+            "summary": "AI 总结 (Summary)",
+            "plaudAccount": "录音笔账号 (Plaud)",
+            "sync": "同步设置 (Sync)",
+            "playback": "播放与系统 (Playback)",
+            "display": "显示偏好 (Display)",
+            "notifications": "报警通知 (Notifications)",
+            "storage": "独立存储 (Storage)",
+            "export": "备份与导出 (Export)",
+            "apiKeys": "接口凭证 (API Keys)",
+            "webhooks": "网络钩子 (Webhooks)",
+            "dev": "开发者工具 (Developer Tools)"
+        },
+        "uiLanguage": "界面语言",
+        "uiLanguageDesc": "选择您首选的用户界面显示语言。",
+        "playbackSpeed": "默认播放速度",
+        "defaultVolume": "默认播放音量",
+        "autoDelete": "自动删除录音",
+        "autoDeleteDesc": "在成功同步或自定义保留周期结束后，自动从本地存储中清除音频文件。",
+        "aiKeys": "AI 接口凭证 (API Keys)",
+        "s3Storage": "S3 兼容对象存储",
+        "notifications": "报警推送通知"
+    },
+    "onboarding": {
+        "welcome": "欢迎使用 Riffado",
+        "welcomeDesc": "让我们连接您的 Plaud 账号并配置您的智能语音流程。",
+        "connect": "连接 Plaud 账号",
+        "emailFlow": "邮箱验证码登录",
+        "emailPlaceholder": "输入您的 Plaud 注册邮箱",
+        "sendCode": "获取验证码",
+        "verifyCode": "验证并绑定",
+        "tokenFlow": "手动粘贴 Token 登录",
+        "tokenPlaceholder": "粘贴您的 Plaud Bearer Access Token",
+        "region": "选择您的 Plaud 账户区域",
+        "regionDesc": "根据您的账号注册地选择对应的 API 服务器节点。",
+        "setupComplete": "配置全部完成！",
+        "setupCompleteDesc": "您的 Riffado 专属服务已准备就绪，开始体验自主同步和转录您的语音录音吧。"
+    }
+}

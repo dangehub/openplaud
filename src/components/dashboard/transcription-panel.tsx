@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useTranscriptionSummary } from "@/hooks/use-transcription-summary";
 import { SUMMARY_PRESETS } from "@/lib/ai/summary-presets";
+import { useTranslation } from "@/lib/i18n";
 import type { Recording } from "@/types/recording";
 
 interface Transcription {
@@ -42,6 +43,9 @@ export function TranscriptionPanel({
     isTranscribing,
     onTranscribe,
 }: TranscriptionPanelProps) {
+    const { t, locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const {
         summaryData,
         isSummarizing,
@@ -64,7 +68,7 @@ export function TranscriptionPanel({
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
                             <FileText className="size-5" />
-                            Transcription
+                            {t("dashboard.transcription.title")}
                         </CardTitle>
                         <div className="flex items-center gap-2">
                             {transcription?.text && (
@@ -75,7 +79,7 @@ export function TranscriptionPanel({
                                     disabled={isTranscribing}
                                 >
                                     <RefreshCw className="size-4 mr-2" />
-                                    Re-transcribe
+                                    {t("dashboard.transcription.retranscribe")}
                                 </Button>
                             )}
                             {!transcription?.text && !isTranscribing && (
@@ -85,7 +89,7 @@ export function TranscriptionPanel({
                                     disabled={isTranscribing}
                                 >
                                     <Sparkles className="size-4 mr-2" />
-                                    Transcribe
+                                    {t("dashboard.transcription.transcribe")}
                                 </Button>
                             )}
                         </div>
@@ -96,7 +100,7 @@ export function TranscriptionPanel({
                         <div className="flex flex-col items-center justify-center py-12">
                             <div className="animate-spin size-8 border-2 border-primary border-t-transparent rounded-full mb-4" />
                             <p className="text-sm text-muted-foreground">
-                                Transcribing audio…
+                                {t("dashboard.transcription.transcribing")}
                             </p>
                         </div>
                     ) : transcription?.text ? (
@@ -111,7 +115,9 @@ export function TranscriptionPanel({
                                     <div className="flex items-center gap-1">
                                         <Languages className="size-3" />
                                         <span>
-                                            Language: {transcription.language}
+                                            {isZh
+                                                ? `语言: ${transcription.language}`
+                                                : `Language: ${transcription.language}`}
                                         </span>
                                     </div>
                                 )}
@@ -120,10 +126,11 @@ export function TranscriptionPanel({
                                         ? transcription.text.trim().split(/\s+/)
                                               .length
                                         : 0}{" "}
-                                    words
+                                    {t("common.words")}
                                 </div>
                                 <div>
-                                    {transcription.text.length} characters
+                                    {transcription.text.length}{" "}
+                                    {t("common.characters")}
                                 </div>
                             </div>
                         </div>
@@ -131,8 +138,7 @@ export function TranscriptionPanel({
                         <div className="flex flex-col items-center justify-center py-10 text-center">
                             <FileText className="size-10 text-muted-foreground mb-3" />
                             <p className="text-sm text-muted-foreground">
-                                No transcription yet. Use the Transcribe button
-                                above.
+                                {t("dashboard.transcription.empty")}
                             </p>
                         </div>
                     )}
@@ -146,7 +152,7 @@ export function TranscriptionPanel({
                         <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2">
                                 <ListChecks className="size-5" />
-                                Summary
+                                {t("dashboard.summary.title")}
                             </CardTitle>
                             <div className="flex items-center gap-2">
                                 {!isSummarizing && (
@@ -164,7 +170,26 @@ export function TranscriptionPanel({
                                                         key={preset.id}
                                                         value={preset.id}
                                                     >
-                                                        {preset.name}
+                                                        {preset.id === "general"
+                                                            ? t(
+                                                                  "dashboard.summary.presets.general",
+                                                              )
+                                                            : preset.id ===
+                                                                "meeting-notes"
+                                                              ? t(
+                                                                    "dashboard.summary.presets.meetingNotes",
+                                                                )
+                                                              : preset.id ===
+                                                                  "key-points"
+                                                                ? t(
+                                                                      "dashboard.summary.presets.keyPoints",
+                                                                  )
+                                                                : preset.id ===
+                                                                    "action-items"
+                                                                  ? t(
+                                                                        "dashboard.summary.presets.actionItems",
+                                                                    )
+                                                                  : preset.name}
                                                     </SelectItem>
                                                 ),
                                             )}
@@ -182,17 +207,19 @@ export function TranscriptionPanel({
                                     {isSummarizing ? (
                                         <>
                                             <Loader2 className="size-4 mr-2 animate-spin" />
-                                            Generating…
+                                            {isZh
+                                                ? "正在生成..."
+                                                : "Generating…"}
                                         </>
                                     ) : summaryData ? (
                                         <>
                                             <RefreshCw className="size-4 mr-2" />
-                                            Re-generate
+                                            {t("dashboard.summary.regenerate")}
                                         </>
                                     ) : (
                                         <>
                                             <Sparkles className="size-4 mr-2" />
-                                            Summarize
+                                            {t("dashboard.summary.summarize")}
                                         </>
                                     )}
                                 </Button>
@@ -204,7 +231,7 @@ export function TranscriptionPanel({
                             <div className="flex flex-col items-center justify-center py-8">
                                 <Loader2 className="size-8 animate-spin text-primary mb-4" />
                                 <p className="text-sm text-muted-foreground">
-                                    Generating summary…
+                                    {t("dashboard.summary.generating")}
                                 </p>
                             </div>
                         ) : summaryData?.summary ? (
@@ -222,8 +249,8 @@ export function TranscriptionPanel({
                                         <ChevronDown className="size-4" />
                                     )}
                                     {summaryExpanded
-                                        ? "Collapse"
-                                        : "Expand summary"}
+                                        ? t("dashboard.summary.collapse")
+                                        : t("dashboard.summary.expand")}
                                 </button>
 
                                 {summaryExpanded && (
@@ -241,7 +268,9 @@ export function TranscriptionPanel({
                                                 0 && (
                                                 <div>
                                                     <h4 className="text-sm font-medium mb-2">
-                                                        Key Points
+                                                        {t(
+                                                            "dashboard.summary.keyPoints",
+                                                        )}
                                                     </h4>
                                                     <ul className="space-y-1">
                                                         {summaryData.keyPoints.map(
@@ -270,7 +299,9 @@ export function TranscriptionPanel({
                                                 0 && (
                                                 <div>
                                                     <h4 className="text-sm font-medium mb-2">
-                                                        Action Items
+                                                        {t(
+                                                            "dashboard.summary.actionItems",
+                                                        )}
                                                     </h4>
                                                     <ul className="space-y-1">
                                                         {summaryData.actionItems.map(
@@ -314,7 +345,7 @@ export function TranscriptionPanel({
                                                 className="text-destructive hover:text-destructive"
                                             >
                                                 <Trash2 className="size-4 mr-1" />
-                                                Delete
+                                                {t("common.delete")}
                                             </Button>
                                         </div>
                                     </div>
@@ -324,8 +355,7 @@ export function TranscriptionPanel({
                             <div className="flex flex-col items-center justify-center py-8 text-center">
                                 <ListChecks className="size-10 text-muted-foreground mb-3" />
                                 <p className="text-sm text-muted-foreground">
-                                    No summary yet. Click "Summarize" to
-                                    generate one.
+                                    {t("dashboard.summary.empty")}
                                 </p>
                             </div>
                         )}

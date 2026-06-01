@@ -22,6 +22,7 @@ import {
 import { RecordingRow } from "@/components/dashboard/recording-row";
 import { Card, CardContent } from "@/components/ui/card";
 import { dateGroupLabel } from "@/lib/format-date";
+import { useTranslation } from "@/lib/i18n";
 import type { DateTimeFormat } from "@/types/common";
 import type { Recording } from "@/types/recording";
 
@@ -93,6 +94,9 @@ export function RecordingList({
     initialChunkSize,
     ref,
 }: RecordingListProps & { ref?: React.Ref<RecordingListHandle> }) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const [dateTimeFormat] = useState<DateTimeFormat>(initialDateTimeFormat);
     const [sortOrder, setSortOrder] = useState<SortOrder>(initialSortOrder);
     const [density, setDensity] = useState<ListDensity>(initialDensity);
@@ -172,8 +176,6 @@ export function RecordingList({
         return groups;
     }, [visible, sortOrder]);
 
-    // Reset visibleCount when the filter changes so search results
-    // aren't accidentally truncated.
     useEffect(() => {
         setVisibleCount(initialChunkSize);
     }, [initialChunkSize]);
@@ -318,8 +320,12 @@ export function RecordingList({
                             <Mic className="mb-2 size-8 text-muted-foreground" />
                             <p className="text-sm text-muted-foreground">
                                 {query
-                                    ? "No recordings match your search."
-                                    : "No recordings yet."}
+                                    ? isZh
+                                        ? "没有匹配搜索的录音。"
+                                        : "No recordings match your search."
+                                    : isZh
+                                      ? "暂无录音。"
+                                      : "No recordings yet."}
                             </p>
                         </div>
                     )}

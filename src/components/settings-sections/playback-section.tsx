@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioWaveform, Keyboard, Play } from "lucide-react";
+import { AudioWaveform, Keyboard, Languages, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { SettingsSectionHeader } from "@/components/settings/section-header";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { useSettings } from "@/hooks/use-settings";
+import { type Locale, useTranslation } from "@/lib/i18n";
 
 const playbackSpeedOptions = [
     { label: "0.5x", value: 0.5 },
@@ -27,6 +28,9 @@ const playbackSpeedOptions = [
 ];
 
 export function PlaybackSection() {
+    const { locale, setLocale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const { isLoadingSettings, isSavingSettings, setIsLoadingSettings } =
         useSettings();
     const [defaultPlaybackSpeed, setDefaultPlaybackSpeed] = useState(1.0);
@@ -130,7 +134,11 @@ export function PlaybackSection() {
                         setPlayerScrubber(prev);
                     }
                 }
-                toast.error("Failed to save settings. Changes reverted.");
+                toast.error(
+                    isZh
+                        ? "保存设置失败，已回滚更改。"
+                        : "Failed to save settings. Changes reverted.",
+                );
             }
         };
 
@@ -150,28 +158,63 @@ export function PlaybackSection() {
     }
 
     const shortcuts: { keys: string; description: string }[] = [
-        { keys: "Space", description: "Play / pause" },
-        { keys: "←", description: "Seek backward 5s" },
-        { keys: "→", description: "Seek forward 5s" },
-        { keys: "↑", description: "Increase volume" },
-        { keys: "↓", description: "Decrease volume" },
+        { keys: "Space", description: isZh ? "播放 / 暂停" : "Play / pause" },
+        { keys: "←", description: isZh ? "后退 5 秒" : "Seek backward 5s" },
+        { keys: "→", description: isZh ? "前进 5 秒" : "Seek forward 5s" },
+        { keys: "↑", description: isZh ? "增大音量" : "Increase volume" },
+        { keys: "↓", description: isZh ? "减小音量" : "Decrease volume" },
     ];
 
     return (
         <div className="space-y-6">
             <SettingsSectionHeader
-                title="Playback"
-                description="Defaults applied to every recording when it loads in the player."
+                title={isZh ? "播放与系统" : "Playback"}
+                description={
+                    isZh
+                        ? "加载每条录音时默认应用的声音、显示与界面语言配置。"
+                        : "Defaults applied to every recording when it loads in the player."
+                }
                 icon={Play}
             />
 
             <div className="space-y-3">
-                {/* Speed + volume defaults grouped — the audio knobs that
-                    apply at the moment a recording is selected. */}
-                <SettingsCard title="Audio defaults">
+                {/* Interface Language Card at the very top */}
+                <SettingsCard title={isZh ? "界面语言" : "Interface Language"}>
+                    <div className="space-y-2">
+                        <Label
+                            htmlFor="ui-language"
+                            className="flex items-center gap-2"
+                        >
+                            <Languages className="size-4 text-muted-foreground" />
+                            {isZh ? "首选语言" : "Preferred Language"}
+                        </Label>
+                        <Select
+                            value={locale}
+                            onValueChange={(val) => {
+                                setLocale(val as Locale);
+                            }}
+                        >
+                            <SelectTrigger id="ui-language" className="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="en">English</SelectItem>
+                                <SelectItem value="zh-CN">简体中文</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                            {isZh
+                                ? "选择您的用户界面显示语言。"
+                                : "Choose your preferred user interface language."}
+                        </p>
+                    </div>
+                </SettingsCard>
+
+                {/* Speed + volume defaults grouped */}
+                <SettingsCard title={isZh ? "默认音频设置" : "Audio defaults"}>
                     <div className="space-y-2">
                         <Label htmlFor="playback-speed">
-                            Default playback speed
+                            {isZh ? "默认播放速度" : "Default playback speed"}
                         </Label>
                         <Select
                             value={defaultPlaybackSpeed.toString()}
@@ -211,7 +254,7 @@ export function PlaybackSection() {
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <Label htmlFor="default-volume">
-                                Default volume
+                                {isZh ? "默认音量" : "Default volume"}
                             </Label>
                             <span className="font-mono text-xs tabular-nums text-muted-foreground">
                                 {defaultVolume}%
@@ -235,13 +278,20 @@ export function PlaybackSection() {
                     </div>
                 </SettingsCard>
 
-                {/* Behavior toggles — things that change what the player
-                    does, not what it sounds like. */}
-                <SettingsCard title="Behavior">
+                {/* Behavior toggles */}
+                <SettingsCard title={isZh ? "播放行为" : "Behavior"}>
                     <ToggleRow
                         id="auto-play-next"
-                        label="Auto-play next recording"
-                        description="Automatically play the next recording when the current one ends."
+                        label={
+                            isZh
+                                ? "自动播放下一条录音"
+                                : "Auto-play next recording"
+                        }
+                        description={
+                            isZh
+                                ? "当前录音播完后自动开始播放下一条。"
+                                : "Automatically play the next recording when the current one ends."
+                        }
                         checked={autoPlayNext}
                         onCheckedChange={(checked) => {
                             setAutoPlayNext(checked);
@@ -254,14 +304,14 @@ export function PlaybackSection() {
                 </SettingsCard>
 
                 {/* Visual appearance of the player itself. */}
-                <SettingsCard title="Appearance">
+                <SettingsCard title={isZh ? "显示外观" : "Appearance"}>
                     <div className="space-y-2">
                         <Label
                             htmlFor="player-scrubber"
                             className="flex items-center gap-2"
                         >
                             <AudioWaveform className="size-4 text-muted-foreground" />
-                            Scrubber style
+                            {isZh ? "进度条样式" : "Scrubber style"}
                         </Label>
                         <Select
                             value={playerScrubber}
@@ -282,23 +332,24 @@ export function PlaybackSection() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="waveform">
-                                    Waveform (default)
+                                    {isZh
+                                        ? "声波波形图 (默认)"
+                                        : "Waveform (default)"}
                                 </SelectItem>
                                 <SelectItem value="slider">
-                                    Progress bar
+                                    {isZh ? "普通水平进度条" : "Progress bar"}
                                 </SelectItem>
                             </SelectContent>
                         </Select>
                         <p className="text-xs text-muted-foreground">
-                            Waveform shows audio amplitude and decodes
-                            in-browser on first listen. Progress bar is the
-                            plain horizontal slider with no decoding cost.
+                            {isZh
+                                ? "声波波形图在首次点击播放时在浏览器本地解码并绘制。水平进度条仅为普通的条形滑块，无任何解码资源开销。"
+                                : "Waveform shows audio amplitude and decodes in-browser on first listen. Progress bar is the plain horizontal slider with no decoding cost."}
                         </p>
                     </div>
                 </SettingsCard>
 
-                {/* Reference — read-only. Lives in the same card system
-                    so the visual rhythm doesn't break at the bottom. */}
+                {/* Reference — read-only. */}
                 <SettingsCard
                     title={
                         <span className="inline-flex items-center gap-2">
@@ -306,10 +357,14 @@ export function PlaybackSection() {
                                 className="size-4 text-muted-foreground"
                                 aria-hidden="true"
                             />
-                            Keyboard shortcuts
+                            {isZh ? "快捷键说明" : "Keyboard shortcuts"}
                         </span>
                     }
-                    description="Available when the player has focus."
+                    description={
+                        isZh
+                            ? "在播放器处于聚焦状态下可用。"
+                            : "Available when the player has focus."
+                    }
                 >
                     <ul className="space-y-1.5">
                         {shortcuts.map((s) => (

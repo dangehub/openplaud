@@ -1,5 +1,8 @@
+"use client";
+
 import { HeroReveal } from "@/components/landing/hero-reveal";
 import { HeroVisual } from "@/components/landing/hero-visual";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Above-the-fold hero.
@@ -9,12 +12,10 @@ import { HeroVisual } from "@/components/landing/hero-visual";
  * across the section boundary into TheMath, so the bg/border seam
  * passes behind the screenshot. TheMath compensates with extra top
  * padding (see `the-math.tsx`).
- *
- * Server component. Only the CTA pair + sticky-mobile bar are
- * client-side (`HeroReveal`) so the LCP element -- the headline --
- * ships as static HTML.
  */
 export function Hero() {
+    const { t } = useTranslation();
+
     return (
         <section className="relative pt-12 md:pt-20">
             {/* Soft brand anchor behind the headline. */}
@@ -26,16 +27,14 @@ export function Hero() {
             <div className="container mx-auto px-4 relative">
                 <div className="mx-auto max-w-3xl text-center">
                     <h1 className="text-[clamp(2.5rem,5.5vw,4.5rem)] font-semibold tracking-[-0.035em] leading-[1.05] text-foreground text-balance">
-                        Every word from your recorder.{" "}
+                        {t("landing.hero.titlePart1")}
                         <span className="text-primary">
-                            Searchable, summarized, and yours.
+                            {t("landing.hero.titlePart2")}
                         </span>
                     </h1>
 
                     <p className="mt-6 text-lg text-muted-foreground leading-[1.55] text-pretty mx-auto max-w-xl">
-                        Sync in the background, transcribe with the AI you
-                        choose — or free in your browser with Whisper — and keep
-                        your audio where you choose.
+                        {t("landing.hero.desc")}
                     </p>
 
                     <div className="mt-8 mx-auto max-w-md sm:max-w-none">

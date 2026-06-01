@@ -1,0 +1,316 @@
+{
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "loading": "Loading...",
+        "success": "Success",
+        "error": "Error",
+        "language": "Language",
+        "back": "Back",
+        "next": "Next",
+        "confirm": "Confirm",
+        "close": "Close",
+        "logout": "Log Out",
+        "login": "Log In",
+        "register": "Register",
+        "words": "words",
+        "characters": "characters",
+        "search": "Search",
+        "upload": "Upload",
+        "uploading": "Uploading..."
+    },
+    "landing": {
+        "title": "OpenPlaud / Riffado",
+        "subtitle": "Open-source AI transcription companion for voice recorders.",
+        "desc": "Bring your own AI provider, own your transcripts, self-host or hosted.",
+        "getStarted": "Get Started",
+        "docs": "Documentation",
+        "discord": "Join Discord",
+        "rebrandNote": "OpenPlaud is now Riffado! The open-source project is under active development.",
+        "announcement": {
+            "label": "Announcement",
+            "text": "OpenPlaud is now Riffado.",
+            "readMore": "Read more",
+            "dismiss": "Dismiss announcement"
+        },
+        "featureTitle": "Why Riffado?",
+        "featureSubtitle": "Take complete ownership of your recordings, transcripts, and AI keys.",
+        "features": {
+            "privacy": "Privacy & Control",
+            "privacyDesc": "Self-host on your own infrastructure. All credentials encrypted at rest via AES-256-GCM.",
+            "pluggable": "No Vendor Lock-in",
+            "pluggableDesc": "Use any OpenAI-compatible AI provider (DeepSeek, Groq, Ollama) or S3 storage.",
+            "browser": "Free Browser Transcription",
+            "browserDesc": "Transcribe free in your browser using Transformers.js Whisper — no API costs, 100% private."
+        },
+        "featuresSection": {
+            "title": "A workstation around the recorder you already have.",
+            "desc": "Your recorder keeps recording. Riffado picks up after the audio leaves the device — and lets you pick the AI, the storage, and where it all lives.",
+            "howItWorks": "How it works",
+            "footerNote": "Free in your browser. Or plug in OpenAI or Groq and pay them directly.",
+            "b1": {
+                "title": "Sign in once, sync forever.",
+                "body": "Log in with the same email you use for your recorder — Riffado sends you a code, just like the app. New recordings show up on their own, and you get a notification when they're ready."
+            },
+            "b2": {
+                "title": "Pick the AI. Get the transcript.",
+                "body": "Use OpenAI or Groq for transcription, plug in Anthropic or others for summaries — you pay them directly at their published rate. No account anywhere? Transcription runs free, right in your browser. Every recording comes back with a summary, key points, and action items."
+            },
+            "b3": {
+                "title": "Search, listen, send it anywhere.",
+                "body": "Player and transcript side-by-side. Search across every word you've ever recorded. Send a single recording to Notion, Obsidian, or your video editor — or download everything as one archive. Open source, end to end."
+            }
+        },
+        "deploy": {
+            "eyebrow": "Self-host, if you want to",
+            "title": "One command. Your server. Yours forever.",
+            "desc": "Riffado ships as a Docker Compose stack — the app, a database, your storage. Move from Hosted whenever you want via full-archive export. Same source, your machine.",
+            "action": "Deploy with Docker →",
+            "installerOutput": "Installer output",
+            "output1": "Verified Docker + Compose v2",
+            "output2": "Wrote .env (secrets generated)",
+            "output3": "Pulled riffado-web, riffado-db",
+            "output4": "Health check passed on /api/health",
+            "points": [
+                "AGPL-3.0 — full source on GitHub, no proprietary fork",
+                "No telemetry, no phone home, no license server",
+                "Local disk, or push to Cloudflare R2, Backblaze B2, or AWS S3",
+                "Bring OpenAI or Groq for cloud transcription — or run Whisper and Ollama locally"
+            ]
+        },
+        "hero": {
+            "titlePart1": "Every word from your recorder. ",
+            "titlePart2": "Searchable, summarized, and yours.",
+            "desc": "Sync in the background, transcribe with the AI you choose — or free in your browser with Whisper — and keep your audio where you choose.",
+            "startFree": "Start free",
+            "selfHostCmd": "or self-host in one command"
+        },
+        "footer": {
+            "desc": "Open-source transcription for the voice recorder you already own. Your recordings, your transcripts, yours to keep.",
+            "compliance": "Riffado is not HIPAA or SOC 2 certified. For regulated work, self-host and plug in an AI provider that signs a BAA you've reviewed, or run a local model that never leaves your machine.",
+            "copyright": "© {year} Riffado. Licensed under AGPL-3.0.",
+            "builtInOpen": "Built in the open on GitHub"
+        },
+        "faq": {
+            "title": "Questions before you sign up.",
+            "subtitle": "The honest answers — including the boring ones.",
+            "didntSee": "Didn't see yours?",
+            "readCode": "Read the code",
+            "or": " or ",
+            "openIssue": "open an issue"
+        },
+        "theMath": {
+            "eyebrow": "How transcription pricing works",
+            "title": "Buy the AI directly. Pay what the provider charges.",
+            "desc": "Most voice-AI services don't transcribe audio themselves — OpenAI, Groq, and Deepgram do. Riffado connects you to those providers directly, with your own key.",
+            "workload": "Same workload · 20 hours of audio (1,200 minutes)",
+            "publishedPricing": "Published pricing as of May 2026. Plans, minute ceilings, and trademarks belong to their respective owners; shown for descriptive context, not comparison. Riffado itself is free to self-host.",
+            "labels": {
+                "subscriptions": "Subscription services",
+                "riffado": "With Riffado"
+            },
+            "subscriptions": {
+                "plaud": "Plaud Pro",
+                "plaudScope": "1,200 transcription minutes",
+                "otter": "Otter Business",
+                "otterScope": "6,000 transcription minutes",
+                "rev": "Rev AI Pro",
+                "revScope": "1,200 transcription minutes"
+            },
+            "options": {
+                "browser": "Riffado in your browser",
+                "browserScope": "Whisper via Transformers.js, no key required",
+                "groq": "Riffado + Groq Whisper",
+                "groqScope": "Billed by Groq at $0.111 / hr",
+                "openai": "Riffado + OpenAI Whisper",
+                "openaiScope": "Billed by OpenAI at $0.006 / min"
+            }
+        },
+        "forProfessionals": {
+            "eyebrow": "For professionals",
+            "kicker": "Lawyers · Journalists · Consultants · Researchers",
+            "title": "If your conversations stay in the room, your recordings should too.",
+            "pillars": {
+                "infrastructure": {
+                    "kicker": "01 / Infrastructure",
+                    "headline": "Runs where you put it.",
+                    "body": "Local disk, your own S3 bucket, or our hosted tier. Recordings sit on storage you control."
+                },
+                "source": {
+                    "kicker": "02 / Source",
+                    "headline": "Auditable, line by line.",
+                    "body": "Every line of Riffado is AGPL-3.0. Read it, fork it, show clients exactly what it does."
+                },
+                "ai": {
+                    "kicker": "03 / AI",
+                    "headline": "Yours, including local.",
+                    "body": "Run Whisper locally via Ollama — recordings never leave the machine. Or plug in any OpenAI-compatible cloud."
+                }
+            },
+            "guide": "Read the self-host guide",
+            "source": "Read the source",
+            "contact": "Need an air-gapped or in-house setup? Write to {email} — I'll reply personally."
+        },
+        "pricing": {
+            "eyebrow": "Pricing",
+            "title": "Pick the version that fits you.",
+            "desc": "Same product, same source. The only difference is who runs the server — and whether you'd rather not think about it.",
+            "bottomNote": "Hosted runs the exact AGPL-3.0 source you can self-host — no hidden fork, no proprietary add-ons. {readSourceLink}. You can move between Hosted and Self-host at any time using full-archive export.",
+            "readSource": "Read the source",
+            "tiers": {
+                "selfHost": {
+                    "name": "Self-host",
+                    "price": "Free",
+                    "priceSuffix": "forever",
+                    "tagline": "Your machine, your data, your rules.",
+                    "features": [
+                        "Unlimited recordings and storage",
+                        "Runs on your laptop, NAS, or VPS via Docker",
+                        "Plug in OpenAI, Groq, Ollama — or transcribe free in your browser",
+                        "Store locally, or push to Cloudflare R2, Backblaze B2, or AWS S3",
+                        "Every feature, no gates"
+                    ],
+                    "cta": "Deploy with Docker"
+                },
+                "hostedFree": {
+                    "name": "Hosted Free",
+                    "price": "$0",
+                    "priceSuffix": "/ month",
+                    "tagline": "We run the server. You bring the keys.",
+                    "features": [
+                        "Sync from your Plaud recorder",
+                        "Free transcription in your browser (Whisper)",
+                        "Plug in OpenAI or Groq for cloud transcription",
+                        "Export everything anytime — JSON, TXT, SRT, VTT",
+                        "Same source as self-host (AGPL-3.0)"
+                    ],
+                    "cta": "Start free"
+                },
+                "hostedPro": {
+                    "name": "Hosted Pro",
+                    "price": "$5",
+                    "priceSuffix": "/ month",
+                    "tagline": "Hosted, with the rough edges paid for.",
+                    "features": [
+                        "Everything in Hosted Free",
+                        "Priority sync and background jobs",
+                        "Off-site encrypted backups",
+                        "Email support from the people who build it",
+                        "Early access to new device support"
+                    ],
+                    "cta": "Join the waitlist"
+                }
+            }
+        },
+        "finalCta": {
+            "title": "Stop renting your own voice.",
+            "titleAccent": "your own voice.",
+            "titlePre": "Stop renting ",
+            "desc": "Your recordings, your transcripts, your AI. Yours to keep.",
+            "cta": "Start free",
+            "ctaAria": "Start Riffado free — no card required",
+            "selfhost": "or self-host in one command",
+            "selfhostAria": "Self-host Riffado in one command"
+        }
+    },
+    "dashboard": {
+        "sidebar": {
+            "recordings": "Recordings",
+            "trash": "Trash",
+            "settings": "Settings",
+            "sync": "Sync",
+            "syncing": "Syncing..."
+        },
+        "recordingList": {
+            "searchPlaceholder": "Search recordings...",
+            "empty": "No recordings found.",
+            "emptyDesc": "Connect your Plaud account or upload an audio file to get started.",
+            "upload": "Upload Audio",
+            "duration": "Duration",
+            "date": "Date"
+        },
+        "player": {
+            "title": "Recording Workstation",
+            "waveformTooltip": "Decode waveform in your browser (may take a few seconds)"
+        },
+        "transcription": {
+            "title": "Transcription",
+            "transcribe": "Transcribe",
+            "retranscribe": "Re-transcribe",
+            "transcribing": "Transcribing audio...",
+            "empty": "No transcription yet. Use the Transcribe button above.",
+            "words": "words",
+            "chars": "characters"
+        },
+        "summary": {
+            "title": "Summary",
+            "summarize": "Summarize",
+            "regenerate": "Re-generate",
+            "generating": "Generating summary...",
+            "empty": "No summary yet. Click \"Summarize\" to generate one.",
+            "collapse": "Collapse",
+            "expand": "Expand summary",
+            "keyPoints": "Key Points",
+            "actionItems": "Action Items",
+            "presets": {
+                "general": "General Summary",
+                "meetingNotes": "Meeting Notes",
+                "keyPoints": "Key Points",
+                "actionItems": "Action Items"
+            }
+        }
+    },
+    "settings": {
+        "title": "Settings",
+        "userSettings": "User Settings",
+        "groups": {
+            "ai": "AI",
+            "plaud": "Plaud",
+            "personalize": "Personalize",
+            "data": "Data",
+            "integrations": "Integrations",
+            "advanced": "Advanced"
+        },
+        "items": {
+            "providers": "Providers",
+            "transcription": "Transcription",
+            "summary": "Summary",
+            "plaudAccount": "Plaud Account",
+            "sync": "Sync",
+            "playback": "Playback",
+            "display": "Display",
+            "notifications": "Notifications",
+            "storage": "Storage",
+            "export": "Export/Backup",
+            "apiKeys": "API Keys",
+            "webhooks": "Webhooks",
+            "dev": "Developer Tools"
+        },
+        "uiLanguage": "UI Language",
+        "uiLanguageDesc": "Choose your preferred user interface language.",
+        "playbackSpeed": "Default Playback Speed",
+        "defaultVolume": "Default Volume",
+        "autoDelete": "Auto-delete Recordings",
+        "autoDeleteDesc": "Automatically delete local files after sync or a custom retention period.",
+        "aiKeys": "AI API Credentials",
+        "s3Storage": "S3-Compatible Storage",
+        "notifications": "Notifications"
+    },
+    "onboarding": {
+        "welcome": "Welcome to Riffado",
+        "welcomeDesc": "Let's connect your Plaud device and set up your transcription flow.",
+        "connect": "Connect Plaud Account",
+        "emailFlow": "Email Verification Code",
+        "emailPlaceholder": "Enter Plaud email",
+        "sendCode": "Send Verification Code",
+        "verifyCode": "Verify Code",
+        "tokenFlow": "Paste Long-Lived Token",
+        "tokenPlaceholder": "Paste Plaud access token",
+        "region": "Select Plaud Region",
+        "regionDesc": "Select the API server region for your account.",
+        "setupComplete": "Setup Complete!",
+        "setupCompleteDesc": "Your Riffado instance is ready. Start syncing your voice recordings."
+    }
+}

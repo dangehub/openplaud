@@ -18,6 +18,7 @@ import {
     OnboardingStepWelcome,
 } from "@/components/onboarding-steps";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 type OnboardingStep = "welcome" | "plaud" | "ai-provider" | "complete";
 
@@ -39,16 +40,14 @@ export function OnboardingDialog({
     onOpenChange,
     onComplete,
 }: OnboardingDialogProps) {
+    const { t, locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const { refresh } = useRouter();
     const [step, setStep] = useState<OnboardingStep>("welcome");
     const [hasPlaudConnection, setHasPlaudConnection] = useState(false);
     const [hasAiProvider, setHasAiProvider] = useState(false);
 
-    // Probe whether the user already finished the Plaud connection in
-    // a previous session, so re-entering the flow doesn't make them
-    // re-paste a token. Same for the AI provider step below. Each runs
-    // only while its step is active to avoid an unnecessary request on
-    // mount.
     useEffect(() => {
         if (open && step === "plaud") {
             fetch("/api/plaud/connection")
@@ -75,8 +74,6 @@ export function OnboardingDialog({
         }
     }, [open, step]);
 
-    // Reset on dialog close so re-opening starts at the welcome step
-    // and the cached "has X" flags get re-fetched.
     useEffect(() => {
         if (!open) {
             setStep("welcome");
@@ -103,7 +100,9 @@ export function OnboardingDialog({
             onOpenChange(false);
             refresh();
         } catch {
-            toast.error("Failed to complete onboarding");
+            toast.error(
+                isZh ? "保存新手引导配置失败" : "Failed to complete onboarding",
+            );
         }
     };
 
@@ -112,7 +111,7 @@ export function OnboardingDialog({
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
                 <DialogHeader>
                     <DialogTitle className="text-2xl" hidden>
-                        Welcome to Riffado
+                        {t("onboarding.welcome")}
                     </DialogTitle>
                 </DialogHeader>
 
@@ -145,7 +144,7 @@ export function OnboardingDialog({
                                     onClick={() => setStep(prevStep)}
                                 >
                                     <ArrowLeft className="size-4 mr-2" />
-                                    Previous
+                                    {isZh ? "上一步" : "Previous"}
                                 </Button>
                             )}
                         </div>
@@ -175,18 +174,18 @@ export function OnboardingDialog({
                                     variant="ghost"
                                     onClick={() => setStep(nextStep)}
                                 >
-                                    Skip
+                                    {isZh ? "跳过" : "Skip"}
                                 </Button>
                             )}
                             {step === "complete" ? (
                                 <Button onClick={handleComplete}>
-                                    Get Started
+                                    {isZh ? "立即开始" : "Get Started"}
                                     <ArrowRight className="size-4 ml-2" />
                                 </Button>
                             ) : (
                                 nextStep && (
                                     <Button onClick={() => setStep(nextStep)}>
-                                        Next
+                                        {t("common.next")}
                                         <ArrowRight className="size-4 ml-2" />
                                     </Button>
                                 )

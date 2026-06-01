@@ -14,6 +14,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useTranslation } from "@/lib/i18n";
 import type { SettingsSection } from "@/types/settings";
 
 interface Props {
@@ -22,106 +23,165 @@ interface Props {
     onSectionChange: (section: SettingsSection) => void;
 }
 
-/**
- * Desktop sidebar navigation. Hidden below md (the mobile picker
- * lives in the dialog header). Grouped layout for visual scanning,
- * but the underlying nav is a single flat list -- the parent's
- * keyboard handler indexes the flat order via `settingsNav`.
- */
 export function SettingsNavSidebar({
     activeSection,
     keyboardSelectedIndex,
     onSectionChange,
 }: Props) {
+    const { t } = useTranslation();
+
     return (
-        // Sidebar needs an explicit height to match <main>'s h-[600px],
-        // otherwise SidebarContent's overflow-y-auto has no bound to
-        // scroll against: DialogContent uses max-h (a constraint, not
-        // a definite height) so the sidebar's h-full would resolve to
-        // its content height and grow rather than scroll once we cross
-        // ~13 nav items.
         <Sidebar className="hidden md:flex md:h-[600px]">
-            {/*
-              Header sits outside SidebarContent so it doesn't scroll
-              away with the nav. Match the main panel <header>'s h-16
-              exactly so the two bottom borders line up.
-            */}
             <div className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
                 <SettingsIcon className="size-5" />
-                <h2 className="text-lg font-semibold">Settings</h2>
+                <h2 className="text-lg font-semibold">{t("settings.title")}</h2>
             </div>
             <SidebarContent className="min-h-0">
-                {/*
-                  Use a real <nav> for the navigation landmark instead
-                  of overloading SidebarMenu (which renders <ul>) with
-                  role="navigation". Each group below has its own <ul>
-                  via SidebarMenu, so <li> items always sit under a
-                  proper list parent -- fixing the previous ul > div >
-                  li nesting which is invalid HTML and confuses screen
-                  readers.
-                */}
                 <nav aria-label="Settings sections" className="space-y-4">
-                    {settingsNavGroups.map((group) => (
-                        <SidebarGroup key={group.label} className="space-y-1">
-                            <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                                {group.label}
-                            </div>
-                            <SidebarGroupContent>
-                                <SidebarMenu>
-                                    {group.items.map((item) => {
-                                        // Resolve the item's flat
-                                        // index so keyboard nav (which
-                                        // still indexes a flat list)
-                                        // stays in sync with what's
-                                        // rendered.
-                                        const flatIndex = settingsNav.findIndex(
-                                            (n) => n.id === item.id,
-                                        );
-                                        return (
-                                            <SidebarMenuItem key={item.id}>
-                                                <SidebarMenuButton
-                                                    data-settings-nav={
-                                                        flatIndex === 0
-                                                            ? "first"
-                                                            : undefined
-                                                    }
-                                                    isActive={
-                                                        activeSection ===
-                                                        item.id
-                                                    }
-                                                    data-keyboard-selected={
-                                                        keyboardSelectedIndex ===
-                                                        flatIndex
-                                                    }
-                                                    onClick={() =>
-                                                        onSectionChange(item.id)
-                                                    }
-                                                    aria-label={`${item.name} settings`}
-                                                    aria-current={
-                                                        activeSection ===
-                                                        item.id
-                                                            ? "page"
-                                                            : undefined
-                                                    }
-                                                    className={
-                                                        item.id === "dev"
-                                                            ? "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 data-[active=true]:bg-red-500/10 data-[active=true]:text-red-700 dark:data-[active=true]:text-red-300"
-                                                            : undefined
-                                                    }
-                                                >
-                                                    <item.icon
-                                                        className="size-4"
-                                                        aria-hidden="true"
-                                                    />
-                                                    <span>{item.name}</span>
-                                                </SidebarMenuButton>
-                                            </SidebarMenuItem>
-                                        );
-                                    })}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-                    ))}
+                    {settingsNavGroups.map((group) => {
+                        const groupLabel =
+                            group.label === "AI"
+                                ? t("settings.groups.ai")
+                                : group.label === "Plaud"
+                                  ? t("settings.groups.plaud")
+                                  : group.label === "Personalize"
+                                    ? t("settings.groups.personalize")
+                                    : group.label === "Data"
+                                      ? t("settings.groups.data")
+                                      : group.label === "Integrations"
+                                        ? t("settings.groups.integrations")
+                                        : group.label === "Advanced"
+                                          ? t("settings.groups.advanced")
+                                          : group.label;
+
+                        return (
+                            <SidebarGroup
+                                key={group.label}
+                                className="space-y-1"
+                            >
+                                <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                                    {groupLabel}
+                                </div>
+                                <SidebarGroupContent>
+                                    <SidebarMenu>
+                                        {group.items.map((item) => {
+                                            const flatIndex =
+                                                settingsNav.findIndex(
+                                                    (n) => n.id === item.id,
+                                                );
+                                            const itemName =
+                                                item.id === "providers"
+                                                    ? t(
+                                                          "settings.items.providers",
+                                                      )
+                                                    : item.id ===
+                                                        "transcription"
+                                                      ? t(
+                                                            "settings.items.transcription",
+                                                        )
+                                                      : item.id === "summary"
+                                                        ? t(
+                                                              "settings.items.summary",
+                                                          )
+                                                        : item.id ===
+                                                            "plaud-account"
+                                                          ? t(
+                                                                "settings.items.plaudAccount",
+                                                            )
+                                                          : item.id === "sync"
+                                                            ? t(
+                                                                  "settings.items.sync",
+                                                              )
+                                                            : item.id ===
+                                                                "playback"
+                                                              ? t(
+                                                                    "settings.items.playback",
+                                                                )
+                                                              : item.id ===
+                                                                  "display"
+                                                                ? t(
+                                                                      "settings.items.display",
+                                                                  )
+                                                                : item.id ===
+                                                                    "notifications"
+                                                                  ? t(
+                                                                        "settings.items.notifications",
+                                                                    )
+                                                                  : item.id ===
+                                                                      "storage"
+                                                                    ? t(
+                                                                          "settings.items.storage",
+                                                                      )
+                                                                    : item.id ===
+                                                                        "export"
+                                                                      ? t(
+                                                                            "settings.items.export",
+                                                                        )
+                                                                      : item.id ===
+                                                                          "api-keys"
+                                                                        ? t(
+                                                                              "settings.items.apiKeys",
+                                                                          )
+                                                                        : item.id ===
+                                                                            "webhooks"
+                                                                          ? t(
+                                                                                "settings.items.webhooks",
+                                                                            )
+                                                                          : item.id ===
+                                                                              "dev"
+                                                                            ? t(
+                                                                                  "settings.items.dev",
+                                                                              )
+                                                                            : item.name;
+
+                                            return (
+                                                <SidebarMenuItem key={item.id}>
+                                                    <SidebarMenuButton
+                                                        data-settings-nav={
+                                                            flatIndex === 0
+                                                                ? "first"
+                                                                : undefined
+                                                        }
+                                                        isActive={
+                                                            activeSection ===
+                                                            item.id
+                                                        }
+                                                        data-keyboard-selected={
+                                                            keyboardSelectedIndex ===
+                                                            flatIndex
+                                                        }
+                                                        onClick={() =>
+                                                            onSectionChange(
+                                                                item.id,
+                                                            )
+                                                        }
+                                                        aria-label={`${itemName} settings`}
+                                                        aria-current={
+                                                            activeSection ===
+                                                            item.id
+                                                                ? "page"
+                                                                : undefined
+                                                        }
+                                                        className={
+                                                            item.id === "dev"
+                                                                ? "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 data-[active=true]:bg-red-500/10 data-[active=true]:text-red-700 dark:data-[active=true]:text-red-300"
+                                                                : undefined
+                                                        }
+                                                    >
+                                                        <item.icon
+                                                            className="size-4"
+                                                            aria-hidden="true"
+                                                        />
+                                                        <span>{itemName}</span>
+                                                    </SidebarMenuButton>
+                                                </SidebarMenuItem>
+                                            );
+                                        })}
+                                    </SidebarMenu>
+                                </SidebarGroupContent>
+                            </SidebarGroup>
+                        );
+                    })}
                 </nav>
             </SidebarContent>
         </Sidebar>

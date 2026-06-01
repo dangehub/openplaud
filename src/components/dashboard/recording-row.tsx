@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatDateTime } from "@/lib/format-date";
 import { formatDurationMs } from "@/lib/format-duration";
+import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { DateTimeFormat } from "@/types/common";
 import type { Recording } from "@/types/recording";
@@ -39,7 +40,10 @@ export function RecordingRow({
     onDelete: (recording: Recording) => Promise<void>;
     registerRef: (id: string, el: HTMLButtonElement | null) => void;
 }) {
+    const { t, locale } = useTranslation();
+    const isZh = locale === "zh-CN";
     const confirm = useConfirm();
+
     return (
         <div
             className={cn(
@@ -72,8 +76,12 @@ export function RecordingRow({
                                     aria-hidden="true"
                                 />
                                 {inFlight === "transcribing"
-                                    ? "Transcribing"
-                                    : "Summarizing"}
+                                    ? isZh
+                                        ? "转录中"
+                                        : "Transcribing"
+                                    : isZh
+                                      ? "总结中"
+                                      : "Summarizing"}
                             </span>
                         )}
                     </div>
@@ -109,7 +117,7 @@ export function RecordingRow({
                         <Button
                             variant="ghost"
                             size="icon-sm"
-                            aria-label="Row actions"
+                            aria-label={isZh ? "行操作" : "Row actions"}
                             onClick={(e) => e.stopPropagation()}
                         >
                             <MoreHorizontal className="size-4" />
@@ -118,37 +126,39 @@ export function RecordingRow({
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem onSelect={() => onSelect(recording)}>
                             <Play />
-                            Open
+                            {isZh ? "打开" : "Open"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             variant="destructive"
                             onSelect={(e) => {
-                                // Keep menu mounted so confirm dialog can take focus.
                                 e.preventDefault();
                                 void confirm({
-                                    title: "Delete this recording?",
+                                    title: isZh
+                                        ? "删除此录音？"
+                                        : "Delete this recording?",
                                     description: (
                                         <>
                                             <span className="font-medium text-foreground">
                                                 {recording.filename}
                                             </span>
                                             <br />
-                                            The audio file and any transcript or
-                                            summary will be removed. If the file
-                                            is still on your Plaud device, the
-                                            next sync will re-download it.
+                                            {isZh
+                                                ? "该音频文件及关联的转录和总结将被删除。如果该文件仍在 Plaud 设备上，下一次同步时将会重新下载它。"
+                                                : "The audio file and any transcript or summary will be removed. If the file is still on your Plaud device, the next sync will re-download it."}
                                         </>
                                     ),
-                                    confirmLabel: "Delete",
-                                    pendingLabel: "Deleting…",
+                                    confirmLabel: t("common.delete"),
+                                    pendingLabel: isZh
+                                        ? "正在删除..."
+                                        : "Deleting…",
                                     destructive: true,
                                     onConfirm: () => onDelete(recording),
                                 });
                             }}
                         >
                             <Trash2 />
-                            Delete
+                            {t("common.delete")}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

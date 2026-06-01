@@ -1,112 +1,94 @@
-/**
- * Industry-survey-style pricing context. Three-vendor format (not
- * head-to-head) using each vendor's own published numbers. Reframe
- * any future edits the same way: factual, dated, no qualitative
- * claims about competitors, no implication that subscription
- * services are overpriced. We show how the underlying-AI economics
- * work -- the reader does the math themselves.
- *
- * `perHour` is the price normalized to one hour of audio so the two
- * tables compare on the same unit. Subscription rows divide the
- * sticker price by the plan's included minutes; Riffado rows use the
- * upstream provider's published per-minute or per-hour rate. Always
- * the vendor's own number -- never a derived "savings" claim.
- */
-const SUBSCRIPTION_SERVICES = [
-    {
-        name: "Plaud Pro",
-        price: "$17.99",
-        unit: "/ month",
-        scope: "1,200 transcription minutes",
-        perHour: "$0.90 / hr",
-    },
-    {
-        name: "Otter Business",
-        price: "$20",
-        unit: "/ user / month",
-        scope: "6,000 transcription minutes",
-        perHour: "$0.20 / hr",
-    },
-    {
-        name: "Rev AI Pro",
-        price: "$29.99",
-        unit: "/ month",
-        scope: "1,200 transcription minutes",
-        perHour: "$1.50 / hr",
-    },
-];
+"use client";
 
-const RIFFADO_OPTIONS = [
-    {
-        name: "Riffado in your browser",
-        price: "$0.00",
-        unit: "free",
-        scope: "Whisper via Transformers.js, no key required",
-        perHour: "$0.00 / hr",
-    },
-    {
-        name: "Riffado + Groq Whisper",
-        price: "$2.22",
-        unit: "one-time",
-        scope: "Billed by Groq at $0.111 / hr",
-        perHour: "$0.11 / hr",
-    },
-    {
-        name: "Riffado + OpenAI Whisper",
-        price: "$7.20",
-        unit: "one-time",
-        scope: "Billed by OpenAI at $0.006 / min",
-        perHour: "$0.36 / hr",
-    },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export function TheMath() {
+    const { t, locale } = useTranslation();
+
+    const subscriptionServices = [
+        {
+            name: t("landing.theMath.subscriptions.plaud"),
+            price: "$17.99",
+            unit: locale === "zh-CN" ? "/ 月" : "/ month",
+            scope: t("landing.theMath.subscriptions.plaudScope"),
+            perHour: locale === "zh-CN" ? "$0.90 / 小时" : "$0.90 / hr",
+        },
+        {
+            name: t("landing.theMath.subscriptions.otter"),
+            price: "$20",
+            unit: locale === "zh-CN" ? "/ 用户 / 月" : "/ user / month",
+            scope: t("landing.theMath.subscriptions.otterScope"),
+            perHour: locale === "zh-CN" ? "$0.20 / 小时" : "$0.20 / hr",
+        },
+        {
+            name: t("landing.theMath.subscriptions.rev"),
+            price: "$29.99",
+            unit: locale === "zh-CN" ? "/ 月" : "/ month",
+            scope: t("landing.theMath.subscriptions.revScope"),
+            perHour: locale === "zh-CN" ? "$1.50 / 小时" : "$1.50 / hr",
+        },
+    ];
+
+    const riffadoOptions = [
+        {
+            name: t("landing.theMath.options.browser"),
+            price: "$0.00",
+            unit: locale === "zh-CN" ? "免费" : "free",
+            scope: t("landing.theMath.options.browserScope"),
+            perHour: locale === "zh-CN" ? "$0.00 / 小时" : "$0.00 / hr",
+        },
+        {
+            name: t("landing.theMath.options.groq"),
+            price: "$2.22",
+            unit: locale === "zh-CN" ? "单次购买" : "one-time",
+            scope: t("landing.theMath.options.groqScope"),
+            perHour: locale === "zh-CN" ? "$0.11 / 小时" : "$0.11 / hr",
+        },
+        {
+            name: t("landing.theMath.options.openai"),
+            price: "$7.20",
+            unit: locale === "zh-CN" ? "单次购买" : "one-time",
+            scope: t("landing.theMath.options.openaiScope"),
+            perHour: locale === "zh-CN" ? "$0.36 / 小时" : "$0.36 / hr",
+        },
+    ];
+
     return (
         <section className="pt-40 md:pt-56 lg:pt-72 pb-24 border-y border-border/40 bg-secondary/10">
             <div className="container mx-auto px-4">
                 <div className="mx-auto max-w-5xl">
                     <div className="max-w-2xl">
                         <p className="text-sm font-mono text-muted-foreground uppercase tracking-wider mb-4">
-                            How transcription pricing works
+                            {t("landing.theMath.eyebrow")}
                         </p>
                         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4 text-balance">
-                            Buy the AI directly. Pay what the provider charges.
+                            {t("landing.theMath.title")}
                         </h2>
                         <p className="text-muted-foreground text-lg leading-relaxed text-pretty">
-                            Most voice-AI services don't transcribe audio
-                            themselves — OpenAI, Groq, and Deepgram do. Riffado
-                            connects you to those providers directly, with your
-                            own key.
+                            {t("landing.theMath.desc")}
                         </p>
                     </div>
 
                     <p className="mt-10 text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                        Same workload &middot; 20 hours of audio
-                        <span className="text-muted-foreground/60">
-                            {" "}
-                            (1,200 minutes)
-                        </span>
+                        {t("landing.theMath.workload")}
                     </p>
 
                     <div className="mt-3 grid gap-4 lg:grid-cols-2 lg:gap-6 items-stretch">
                         <PriceTable
-                            label="Subscription services"
-                            rows={SUBSCRIPTION_SERVICES}
+                            label={t("landing.theMath.labels.subscriptions")}
+                            rows={subscriptionServices}
                             tone="muted"
                         />
                         <PriceTable
-                            label="With Riffado"
-                            rows={RIFFADO_OPTIONS}
+                            label={t("landing.theMath.labels.riffado")}
+                            rows={riffadoOptions}
                             tone="primary"
                             highlightFirst
                         />
                     </div>
 
                     <p className="mt-6 text-xs text-muted-foreground/80 leading-relaxed text-pretty max-w-2xl">
-                        Published pricing as of May 2026. Plans, minute
-                        ceilings, and trademarks belong to their respective
-                        owners; shown for descriptive context, not comparison.
-                        Riffado itself is free to self-host.
+                        {t("landing.theMath.publishedPricing")}
                     </p>
                 </div>
             </div>
@@ -130,20 +112,7 @@ function PriceTable({
 }: {
     label: string;
     rows: Row[];
-    /**
-     * Both cards share identical chrome (border, radius, row height,
-     * price font size) so they pair as a single comparison. Hierarchy
-     * comes from `tone` -- subscriptions render in muted-foreground,
-     * Riffado in foreground, the highlighted free row in primary --
-     * never from size. Resizing prices made the rows misalign in the
-     * previous version.
-     */
     tone: "muted" | "primary";
-    /**
-     * Riffado side leads with the strongest proof (free in browser).
-     * Highlight the first row instead of the last so the eye lands on
-     * "$0.00" before scanning the rest.
-     */
     highlightFirst?: boolean;
 }) {
     const isMuted = tone === "muted";

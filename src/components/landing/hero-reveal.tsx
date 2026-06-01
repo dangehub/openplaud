@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { MetalButton } from "@/components/metal-button";
+import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 /**
@@ -44,6 +45,7 @@ function track(name: string, props?: Record<string, unknown>) {
  * driven by a single `mounted` boolean.
  */
 export function HeroReveal() {
+    const { t } = useTranslation();
     const [mounted, setMounted] = useState(false);
     const [showStickyCta, setShowStickyCta] = useState(false);
     const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -104,7 +106,7 @@ export function HeroReveal() {
                                 })
                             }
                         >
-                            <span>Start free</span>
+                            <span>{t("landing.hero.startFree")}</span>
                             <ArrowRight className="size-4" />
                         </Link>
                     </MetalButton>
@@ -129,7 +131,7 @@ export function HeroReveal() {
                         }
                         className="group inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                     >
-                        <span>or self-host in one command</span>
+                        <span>{t("landing.hero.selfHostCmd")}</span>
                         <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                     </Link>
                 </div>
@@ -163,7 +165,7 @@ export function HeroReveal() {
                                 })
                             }
                         >
-                            <span>Start free</span>
+                            <span>{t("landing.hero.startFree")}</span>
                             <ArrowRight className="size-4" />
                         </Link>
                     </MetalButton>

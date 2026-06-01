@@ -1,7 +1,12 @@
+"use client";
+
 import { ArrowRight, Github } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 export function ForProfessionals() {
+    const { t } = useTranslation();
+
     return (
         <section
             id="for-professionals"
@@ -10,35 +15,50 @@ export function ForProfessionals() {
             <div className="container mx-auto px-4">
                 <div className="max-w-5xl mx-auto">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono uppercase tracking-wider mb-4 text-muted-foreground">
-                        <span>For professionals</span>
+                        <span>{t("landing.forProfessionals.eyebrow")}</span>
                         <span aria-hidden className="text-muted-foreground/40">
                             {"//"}
                         </span>
                         <span className="text-muted-foreground/80">
-                            Lawyers · Journalists · Consultants · Researchers
+                            {t("landing.forProfessionals.kicker")}
                         </span>
                     </div>
 
                     <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-8 max-w-3xl">
-                        If your conversations stay in the room, your recordings
-                        should too.
+                        {t("landing.forProfessionals.title")}
                     </h2>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-8 mb-10">
                         <Pillar
-                            kicker="01 / Infrastructure"
-                            headline="Runs where you put it."
-                            body="Local disk, your own S3 bucket, or our hosted tier. Recordings sit on storage you control."
+                            kicker={t(
+                                "landing.forProfessionals.pillars.infrastructure.kicker",
+                            )}
+                            headline={t(
+                                "landing.forProfessionals.pillars.infrastructure.headline",
+                            )}
+                            body={t(
+                                "landing.forProfessionals.pillars.infrastructure.body",
+                            )}
                         />
                         <Pillar
-                            kicker="02 / Source"
-                            headline="Auditable, line by line."
-                            body="Every line of Riffado is AGPL-3.0. Read it, fork it, show clients exactly what it does."
+                            kicker={t(
+                                "landing.forProfessionals.pillars.source.kicker",
+                            )}
+                            headline={t(
+                                "landing.forProfessionals.pillars.source.headline",
+                            )}
+                            body={t(
+                                "landing.forProfessionals.pillars.source.body",
+                            )}
                         />
                         <Pillar
-                            kicker="03 / AI"
-                            headline="Yours, including local."
-                            body="Run Whisper locally via Ollama — recordings never leave the machine. Or plug in any OpenAI-compatible cloud."
+                            kicker={t(
+                                "landing.forProfessionals.pillars.ai.kicker",
+                            )}
+                            headline={t(
+                                "landing.forProfessionals.pillars.ai.headline",
+                            )}
+                            body={t("landing.forProfessionals.pillars.ai.body")}
                         />
                     </div>
 
@@ -48,7 +68,7 @@ export function ForProfessionals() {
                                 href="/docs/self-hosting"
                                 className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md bg-foreground text-background hover:bg-foreground/90 transition-colors text-sm font-medium"
                             >
-                                Read the self-host guide
+                                {t("landing.forProfessionals.guide")}
                                 <ArrowRight className="size-4" />
                             </Link>
                             <Link
@@ -58,18 +78,25 @@ export function ForProfessionals() {
                                 className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md border border-border bg-background hover:bg-secondary/40 transition-colors text-sm font-medium"
                             >
                                 <Github className="size-4" />
-                                Read the source
+                                {t("landing.forProfessionals.source")}
                             </Link>
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed">
-                            Need an air-gapped or in-house setup? Write to{" "}
-                            <Link
-                                href="mailto:support@riffado.com?subject=In-house%20Riffado%20setup"
-                                className="text-foreground font-medium hover:text-primary transition-colors underline-offset-4 hover:underline"
-                            >
-                                support@riffado.com
-                            </Link>{" "}
-                            — I'll reply personally.
+                            {t("landing.forProfessionals.contact")
+                                .split("{email}")
+                                .reduce<React.ReactNode[]>((acc, part, i) => {
+                                    if (i === 0) return [part];
+                                    return acc.concat([
+                                        <Link
+                                            key="support-email"
+                                            href="mailto:support@riffado.com?subject=In-house%20Riffado%20setup"
+                                            className="text-foreground font-medium hover:text-primary transition-colors underline-offset-4 hover:underline"
+                                        >
+                                            support@riffado.com
+                                        </Link>,
+                                        part,
+                                    ]);
+                                }, [])}
                         </p>
                     </div>
                 </div>
