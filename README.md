@@ -1,625 +1,148 @@
 <div align="center">
 
-# 🎙️ OpenPlaud
+# 🎙️ OpenPlaud (中国区支持版)
 
-**Self-hosted AI transcription interface for Plaud Note devices**
+**Plaud Note 设备的自托管 AI 语音转写界面**
 
-*Replace Plaud's $20/month AI subscription with your own OpenAI-compatible API keys*
+*用你自己的 OpenAI 兼容 API 密钥替换 Plaud 的 20美元/月 AI 订阅服务*
+
+> 💡 **本项目派生自官方 OpenPlaud**，在原版基础上**新增了对 Plaud 中国区账号 (`plaud.cn`) 的完整支持**。你可以使用你的国内 Plaud 账号直接登录同步录音！
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/typescript-5.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Discord](https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white)](https://openplaud.com/discord)
 
-[Quick Start](#-quick-start) • [Features](#-features) • [Configuration](#-configuration-guide) • [Contributing](#-contributing) • [Discord](https://openplaud.com/discord) • [License](#-license)
+[快速开始](#-快速开始) • [特性](#-特性) • [配置指南](#-配置指南) • [本项目差异](#-与官方原版的区别)
 
 </div>
 
 ---
 
-## ✨ Features
+## 🌟 与官方原版的区别
 
-### 🔐 Privacy & Control
-- **Self-Hosted** - Complete control over your data and API keys
-- **Encrypted Credentials** - AES-256-GCM encryption for all sensitive data
-- **No Vendor Lock-in** - Your recordings, your infrastructure
+官方的 OpenPlaud 仅支持全球版（`plaud.ai`，含亚太、欧洲等区域），**不支持**国内中国区注册的账号 (`plaud.cn`)。
 
-### 🤖 AI & Transcription
-- **Universal AI Support** - Works with ANY OpenAI-compatible API:
-  - OpenAI, Groq, Together AI, OpenRouter
-  - Local models: LM Studio, Ollama
-  - And any other OpenAI-compatible endpoint
-- **Browser Transcription** - Client-side transcription using Transformers.js (zero API costs!)
-- **AI Title Generation** - Automatically generate descriptive titles from transcriptions
-- **Multiple AI Providers** - Configure and switch between different providers
+本项目在官方基础上进行了如下定制化改进：
+1. **支持中国区服务器 (`api.plaud.cn`)**：在绑定账号时，直接支持输入中国区账号验证码，或粘贴 `web.plaud.cn` 的 Access Token。
+2. **修复特定区域限流 Date 格式问题**：修复了在访问国内节点时可能出现的限流解析异常。
+3. **定制化的 Docker 镜像**：提供基于 `qudange/openplaud` 的专用镜像，无需自己编译，拉取即用。
 
-### 💾 Storage & Sync
-- **Flexible Storage** - Local filesystem OR S3-compatible storage:
-  - AWS S3, Cloudflare R2, MinIO
-  - DigitalOcean Spaces, Wasabi, Backblaze B2
-- **Auto-Sync** - Automatically download recordings from Plaud devices
-- **Configurable Intervals** - Set your own sync schedule
+---
 
-### 📤 Export & Notifications
-- **Multiple Export Formats** - JSON, TXT, SRT, VTT subtitle formats
-- **Full Backups** - Export all your data with one click
-- **Automation API & Webhooks** - API keys, `/api/v1`, and signed webhooks for integrations ([docs](docs/API.md))
-- **Browser Notifications** - Real-time alerts for new recordings
-- **Email Notifications** - SMTP support for email alerts
+## ✨ 特性
 
-### 🚀 Deployment & UX
-- **Zero-Config Deployment** - Up and running with one Docker Compose command
-- **Guided Onboarding** - Interactive setup wizard for new users
-- **Modern UI** - Clean, hardware-inspired design with dark theme support
-- **Comprehensive Error Handling** - Graceful failures with helpful error messages
+### 🔐 隐私与控制
+- **私有化部署** - 对你的数据和 API 密钥拥有完全控制权
+- **凭证加密** - 对所有敏感数据使用 AES-256-GCM 进行静态加密存储
+- **无供应商锁定** - 你的录音，你自己的基础设施
 
-## 🚀 Quick Start
+### 🤖 AI 与 转写
+- **通用 AI 支持** - 支持任何兼容 OpenAI 格式的 API：
+  - OpenAI, Groq, Together AI, OpenRouter, 零一万物, DeepSeek, 智谱等
+  - 本地模型：LM Studio, Ollama
+- **浏览器本地转写** - 使用 Transformers.js 在客户端进行转写（零 API 成本！）
+- **AI 标题生成** - 根据转写内容自动生成描述性标题
+- **多 AI 提供商** - 可配置并在多个不同的提供商之间灵活切换
 
-### Prerequisites
+### 💾 存储与同步
+- **灵活存储** - 本地文件系统 或 S3 兼容存储（AWS S3, 阿里云 OSS, 腾讯云 COS, MinIO, Cloudflare R2 等）
+- **自动同步** - 自动从 Plaud 设备下载录音
+- **自定义间隔** - 设置你自己的同步计划
 
-- 🐳 Docker & Docker Compose
-- 🎙️ Plaud Note device with account at [plaud.ai](https://plaud.ai)
-- 🤖 OpenAI API key (or any OpenAI-compatible provider)
+### 📤 导出与通知
+- **多种导出格式** - JSON, TXT, SRT, VTT 字幕格式
+- **完整备份** - 一键导出所有数据
+- **自动化 API & Webhooks** - 带有签名的 webhook 用于第三方自动化集成
+- **浏览器与邮件通知** - 新录音的实时提醒
 
-### Quick install (Linux / macOS)
+---
 
-If you have Docker running, one line gets you a working OpenPlaud:
+## 🚀 快速开始
 
-```bash
-curl -fsSL https://openplaud.com/install.sh | sh
-```
+### 前置条件
+- 🐳 确保服务器已安装 Docker & Docker Compose
+- 🎙️ 拥有 [plaud.cn](https://plaud.cn) 或 [plaud.ai](https://plaud.ai) 账号的 Plaud Note 设备
+- 🤖 OpenAI 兼容的 API 密钥
 
-The installer prompts for an install directory and `APP_URL`, downloads `docker-compose.yml` + `env.example` from the latest GitHub release, generates secrets (`BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, `POSTGRES_PASSWORD`), starts the stack, and waits for `/api/health` to return 200. Source: [`scripts/install.sh`](scripts/install.sh).
+### Docker 部署（推荐）
 
-Pin to a specific version for reproducible installs:
+本项目已打包并发布到了 Docker Hub，你可以非常方便地使用定制镜像 `qudange/openplaud` 来运行。
 
-```bash
-curl -fsSL https://openplaud.com/v0.2.0/install.sh | sh
-```
+**1. 创建目录并下载配置文件**
 
-Windows: install via WSL2. The manual install below is the supported fallback for any environment where `curl | sh` isn't appropriate.
-
-### Manual install
-
-OpenPlaud ships as a Docker image on GitHub Container Registry. You don't need to clone the repo to self-host — just grab the compose file and env template from the latest release.
-
-**1. Create a directory and download the install files**
+从本仓库下载最新的 `docker-compose.yml` 和 `.env.example` 文件：
 
 ```bash
 mkdir openplaud && cd openplaud
 
-curl -fLO https://github.com/openplaud/openplaud/releases/latest/download/docker-compose.yml
-curl -fL  https://github.com/openplaud/openplaud/releases/latest/download/env.example -o .env
+curl -fLO https://raw.githubusercontent.com/dangehub/openplaud/main/docker-compose.yml
+curl -fL  https://raw.githubusercontent.com/dangehub/openplaud/main/.env.example -o .env
 ```
 
-**2. Generate secrets and edit `.env`**
+**2. 生成密钥并编辑 `.env`**
+
+你需要生成两个 32 字节的随机十六进制字符串作为安全密钥：
 
 ```bash
-# Print two fresh secrets — paste them into .env
+# 生成两个全新的密钥 — 复制并将它们粘贴到 .env 文件中
 echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)"
 echo "ENCRYPTION_KEY=$(openssl rand -hex 32)"
 ```
 
-Open `.env` and set at minimum:
+打开 `.env` 文件并至少设置以下几项：
 
 ```env
-BETTER_AUTH_SECRET=<paste>
-ENCRYPTION_KEY=<paste>
+BETTER_AUTH_SECRET=<粘贴你生成的密钥>
+ENCRYPTION_KEY=<粘贴你生成的密钥>
 APP_URL=http://localhost:3000
 
-# Optional — pin a specific OpenPlaud version for reproducible deploys.
-# Leave as `latest` for newest stable, or use e.g. `0.1.0` / `dev`.
+# 默认使用 latest 镜像
 OPENPLAUD_VERSION=latest
-
-# Optional — lock down sign-ups on a closed instance. When set, the
-# /register page is disabled and better-auth rejects new sign-ups
-# server-side. Existing users keep working. Defaults to false.
-# DISABLE_REGISTRATION=true
 ```
 
-**3. Start the application**
+**3. 启动应用**
+
+`docker-compose.yml` 已经默认配置为从 `qudange/openplaud` 拉取镜像。直接执行：
 
 ```bash
 docker compose up -d
 ```
 
-**4. Access OpenPlaud**
+**4. 访问 OpenPlaud**
 
-Open **http://localhost:3000** and create your account. The onboarding wizard will guide you through connecting your Plaud device, configuring AI providers, storage, and sync preferences.
-
-### Upgrading
-
-```bash
-docker compose pull && docker compose up -d
-```
-
-Database migrations run automatically on container start. To pin a version (recommended for production), set `OPENPLAUD_VERSION=0.1.0` in `.env`. To roll back, set it to the previous tag and re-run the command above.
-
-### Image tags
-
-| Tag | What you get | Use when |
-|-----|--------------|----------|
-| `latest` | Newest stable release | Default — most users |
-| `0.1.0`, `0.1` | Specific version / minor line | Production — pin for reproducibility |
-| `dev` | Rolling build from `main` | You want bleeding edge, accept breakage |
-
-> ⚠️ **`main` is a rolling integration branch.** Do not deploy by cloning and building from `main` — use the image tags above. See [BRANCHING.md](BRANCHING.md) for details.
-
-## 📖 Configuration Guide
-
-### 🔑 Connecting Your Plaud Account
-
-OpenPlaud signs into Plaud directly using your email — the same way the official Plaud app does:
-
-1. Enter the email address you use on [plaud.ai](https://plaud.ai)
-2. Plaud sends you a verification code
-3. Enter the code in OpenPlaud — that's it
-
-Your verification code is forwarded directly to Plaud's servers and **never stored** by OpenPlaud. Your Plaud email *is* stored alongside the connection so you can see which account is linked and switch accounts later — it lives only on your self-hosted instance. After login, the access token is encrypted (AES-256-GCM) and stored the same way. Your account region (Global, EU, Asia Pacific) is detected automatically.
-
-> 🔓 **Open Source**: Every line that handles your credentials is available for inspection — [send-code route](src/app/api/plaud/auth/send-code/route.ts) · [verify route](src/app/api/plaud/auth/verify/route.ts) · [encryption](src/lib/encryption.ts)
-
-#### Signed up to Plaud with Google or Apple?
-
-The email-code flow above signs you into a Plaud account keyed off the *email-password* identity. If you originally created your Plaud account by tapping **Continue with Google** or **Continue with Apple**, that's a different identity on Plaud's side — even when both share the same email address. The email-code flow will look like it succeeded but sync will return zero recordings ([#65](https://github.com/openplaud/openplaud/issues/65)).
-
-Real Sign in with Google / Apple inside OpenPlaud is structurally blocked by Google's authorized-origins policy on Plaud's OAuth client. Two workarounds:
-
-**Easy path — OpenPlaud Connector browser extension.** Install [openplaud/connector](https://github.com/openplaud/connector) (AGPL-3.0) and the connect screen surfaces a **Sign in with Plaud** button. You sign in to web.plaud.ai the way you normally do; the extension forwards the resulting access token back to OpenPlaud. No copy-pasting, no devtools.
-
-**Manual fallback — paste the token yourself.** If you can't or won't install the extension:
-
-1. Open [web.plaud.ai](https://web.plaud.ai) in another tab and sign in with Google or Apple as you normally would.
-2. Open browser devtools (F12 / Cmd+Option+I) → **Network** tab. Refresh the page.
-3. Click any request to a host starting with `api.plaud.ai`, `api-euc1.plaud.ai`, or `api-apse1.plaud.ai`.
-4. Under **Headers → Request Headers**, find `Authorization`. Copy everything after `Bearer ` (the long `eyJ…` string).
-5. In OpenPlaud, switch to the **Paste token** tab, pick the matching region (e.g. EU if the request host was `api-euc1.plaud.ai`), and paste the token.
-
-In both cases the token is encrypted at rest with AES-256-GCM.
-
-### 💾 Storage Options
-
-#### 📁 Local Filesystem (Default)
-
-Recordings are stored in Docker volume `/app/audio`. No additional configuration needed.
-
-**Pros**: Zero setup, works out of the box  
-**Cons**: Limited to host machine storage
-
-#### ☁️ S3-Compatible Storage
-
-OpenPlaud supports ANY S3-compatible service. Configure through the settings UI or via environment variables.
-
-<details>
-<summary><b>🗄️ AWS S3</b></summary>
-
-```
-Endpoint: (leave blank)
-Bucket: your-bucket-name
-Region: us-east-1
-Access Key ID: YOUR_KEY
-Secret Access Key: YOUR_SECRET
-```
-
-</details>
-
-<details>
-<summary><b>🌐 Cloudflare R2</b></summary>
-
-```
-Endpoint: https://<account-id>.r2.cloudflarestorage.com
-Bucket: openplaud
-Region: auto
-Access Key ID: YOUR_KEY
-Secret Access Key: YOUR_SECRET
-```
-
-**Note**: R2 offers 10GB free storage with no egress fees!
-
-</details>
-
-<details>
-<summary><b>🐳 MinIO (Self-hosted)</b></summary>
-
-```
-Endpoint: http://minio:9000
-Bucket: openplaud
-Region: us-east-1
-Access Key ID: minioadmin
-Secret Access Key: minioadmin
-```
-
-Perfect for self-hosted deployments!
-
-</details>
-
-<details>
-<summary><b>🌊 DigitalOcean Spaces</b></summary>
-
-```
-Endpoint: https://<region>.digitaloceanspaces.com
-Bucket: your-space-name
-Region: <region>
-Access Key ID: YOUR_KEY
-Secret Access Key: YOUR_SECRET
-```
-
-</details>
-
-<details>
-<summary><b>💧 Backblaze B2</b></summary>
-
-```
-Endpoint: https://s3.<region>.backblazeb2.com
-Bucket: your-bucket-name
-Region: <region>
-Access Key ID: YOUR_KEY
-Secret Access Key: YOUR_SECRET
-```
-
-Excellent pricing for long-term storage!
-
-</details>
-
-### 🤖 AI Provider Setup
-
-OpenPlaud uses the OpenAI SDK with custom `baseURL` support, making it compatible with **any** OpenAI-compatible API.
-
-> 💡 **Configure multiple providers** and switch between them based on your needs!
-
-<details>
-<summary><b>OpenAI (Official)</b></summary>
-
-- **Base URL**: (leave blank)
-- **API Key**: Your OpenAI key
-- **Models**: `whisper-1`, `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`
-
-Best for: Production quality, latest models
-
-</details>
-
-<details>
-<summary><b>🚀 Groq (Free Whisper API!)</b></summary>
-
-- **Base URL**: `https://api.groq.com/openai/v1`
-- **API Key**: Your Groq key
-- **Models**: `whisper-large-v3`, `llama-3.1-70b-versatile`
-
-Best for: **Free transcription**, ultra-fast inference
-
-</details>
-
-<details>
-<summary><b>Together AI</b></summary>
-
-- **Base URL**: `https://api.together.xyz/v1`
-- **API Key**: Your Together AI key
-- **Models**: `whisper-large-v3`, `meta-llama/Llama-3-70b-chat-hf`
-
-Best for: Cost-effective, diverse model selection
-
-</details>
-
-<details>
-<summary><b>OpenRouter (Access to Claude, GPT-4, Llama)</b></summary>
-
-- **Base URL**: `https://openrouter.ai/api/v1`
-- **API Key**: Your OpenRouter key
-- **Models**: `anthropic/claude-3.5-sonnet`, `openai/gpt-4-turbo`, `meta-llama/llama-3-70b-instruct`
-
-Best for: Access to multiple providers through one API
-
-</details>
-
-<details>
-<summary><b>🏠 LM Studio (Local Models)</b></summary>
-
-- **Base URL**: `http://localhost:1234/v1`
-- **API Key**: `lm-studio` (or any string)
-- **Models**: Name of your loaded model
-
-Best for: 100% private, offline transcription
-
-</details>
-
-<details>
-<summary><b>🦙 Ollama (Local Models)</b></summary>
-
-- **Base URL**: `http://localhost:11434/v1`
-- **API Key**: `ollama` (or any string)
-- **Models**: `whisper`, `llama3`, `mistral`, etc.
-
-Best for: Easy local model management
-
-</details>
-
-<details>
-<summary><b>📚 Azure OpenAI</b></summary>
-
-- **Base URL**: `https://<resource>.openai.azure.com/openai/deployments/<deployment>`
-- **API Key**: Your Azure OpenAI key
-- **Models**: Your deployment name
-
-Best for: Enterprise compliance, Azure integration
-
-</details>
-
-### 🌐 Browser-Based Transcription (Free!)
-
-OpenPlaud supports **client-side transcription** using Transformers.js, running Whisper models directly in your browser:
-
-| Feature | Description |
-|---------|-------------|
-| 💰 **Zero API Costs** | Runs entirely in the browser |
-| 🔒 **Privacy-First** | Audio never leaves your device |
-| 🤖 **Models Available** | `whisper-tiny`, `whisper-base`, `whisper-small` |
-| 🎯 **Auto-Detected** | Automatically available in transcription UI |
-
-> ⚠️ **Note**: Browser transcription is slower than server-side but completely free and private. Perfect for sensitive recordings!
-
-## 🏗️ Architecture
-
-### Tech Stack
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-**Frontend**
-- Next.js 16 (App Router)
-- TypeScript
-- Tailwind CSS
-- Framer Motion
-- Wavesurfer.js (audio visualization)
-
-**Backend**
-- PostgreSQL
-- Drizzle ORM
-- Better Auth
-
-</td>
-<td width="50%" valign="top">
-
-**AI & Transcription**
-- OpenAI SDK (universal compatibility)
-- Transformers.js (browser transcription)
-
-**Storage**
-- Local filesystem
-- S3-compatible (AWS, R2, MinIO, etc.)
-
-**Deployment**
-- Docker & Docker Compose
-- Single-container architecture
-
-</td>
-</tr>
-</table>
-
-### Database Schema
-
-| Table | Purpose |
-|-------|---------|
-| `users` & `sessions` | Authentication (Better Auth) |
-| `plaud_connections` | Encrypted Plaud bearer tokens |
-| `plaud_devices` | Connected Plaud devices |
-| `recordings` | Recording metadata + storage paths |
-| `transcriptions` | AI-generated transcriptions |
-| `ai_enhancements` | Summaries, action items, key points |
-| `api_credentials` | Encrypted AI API keys (multiple providers) |
-| `storage_config` | User storage preferences (local/S3) |
-| `user_settings` | Sync, notifications, playback, export preferences |
-
-### 🔒 Security
-
-- 🔐 **AES-256-GCM encryption** for sensitive data — API keys, Plaud bearer tokens, and user content (transcripts, summaries, action items, key points, recording titles, custom prompts). Defends against DB-only compromise (stolen backups, snapshot leaks). Not zero-knowledge: the server holds the key and decrypts at request time to run AI. Self-host with browser/local AI if you need true zero-knowledge. See [docs/encryption-at-rest.md](docs/encryption-at-rest.md).
-- 🛡️ **Better Auth** for secure session management
-- 🗄️ **PostgreSQL** for reliable data persistence
-- 🐳 **Docker isolation** for secure deployment
-- 🚫 **No telemetry** - Your data stays yours
-
-## 🎨 Design Philosophy
-
-OpenPlaud features a **hardware-inspired design** that brings the tactile feel of audio equipment to the web:
-
-| Component | Description |
-|-----------|-------------|
-| 🎛️ **Rotary Knobs** | Draggable 360° rotation with LED ring indicators |
-| 💡 **LED Indicators** | Animated glow effects for status feedback |
-| 🎚️ **Hardware Rack Modules** | Authentic audio equipment aesthetic with mounting holes |
-| 📊 **Waveform Display** | Real-time audio visualization (Wavesurfer.js) |
-| 🌙 **Dark Theme** | Easy on the eyes for long listening sessions |
-| 🧭 **Guided Onboarding** | Interactive setup wizard for new users |
-
-> 💡 The UI is inspired by professional audio workstations, combining functionality with aesthetics.
-
-## 🔧 Development
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, code standards, and the PR workflow. See [BRANCHING.md](BRANCHING.md) for the branching and release model.
-
-### Database Management
-
-| Command | Description |
-|---------|-------------|
-| `pnpm db:generate` | Generate new migration from schema changes |
-| `bun db:migrate` | Apply migrations to database |
-| `pnpm db:studio` | Open Drizzle Studio (visual database browser) |
-
-### Testing
-
-#### Unit Tests
-
-```bash
-# Run all tests
-bun test
-
-# Run specific test file
-bun test src/tests/plaud.test.ts
-```
-
-#### Integration Tests
-
-Live Plaud API tests are **opt-in** to avoid credential leaks and rate limits:
-
-```bash
-export PLAUD_BEARER_TOKEN="Bearer eyJhbGciOi..."
-bun test src/tests/plaud.integration.test.ts
-```
-
-> 💡 Integration tests run against the real Plaud API. Leave `PLAUD_BEARER_TOKEN` unset in CI to skip them.
-
-### Project Structure
-
-```
-src/
-├── app/              # Next.js App Router pages
-│   ├── (app)/       # Authenticated routes
-│   ├── (auth)/      # Authentication pages
-│   └── api/         # API routes
-├── components/       # React components
-│   ├── ui/          # shadcn/ui components
-│   └── dashboard/   # Feature components
-├── lib/             # Core business logic
-│   ├── ai/          # AI integration
-│   ├── plaud/       # Plaud API client
-│   ├── storage/     # Storage abstraction
-│   └── transcription/ # Transcription logic
-├── db/              # Database schema & migrations
-└── types/           # TypeScript type definitions
-```
-
-## 📊 API Reference
-
-<details>
-<summary><b>🔐 Authentication</b></summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/sign-up` | Create account |
-| `POST` | `/api/auth/sign-in` | Login |
-| `POST` | `/api/auth/sign-out` | Logout |
-
-</details>
-
-<details>
-<summary><b>🎙️ Plaud Integration</b></summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/plaud/auth/send-code` | Send OTP verification code to Plaud email |
-| `POST` | `/api/plaud/auth/verify` | Verify OTP and store encrypted connection |
-| `GET` | `/api/plaud/connection` | Check connection status |
-| `DELETE` | `/api/plaud/connection` | Disconnect Plaud account (preserves recordings) |
-| `POST` | `/api/plaud/sync` | Manual sync recordings |
-
-</details>
-
-<details>
-<summary><b>🎵 Recordings</b></summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/recordings` | List all recordings |
-| `GET` | `/api/recordings/[id]` | Get recording details |
-| `GET` | `/api/recordings/[id]/audio` | Stream audio file |
-| `POST` | `/api/recordings/[id]/transcribe` | Transcribe recording |
-
-</details>
-
-<details>
-<summary><b>⚙️ Settings</b></summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/settings/user` | Get user settings |
-| `PUT` | `/api/settings/user` | Update user settings |
-| `PUT` | `/api/settings/storage` | Configure storage |
-| `GET` | `/api/settings/ai/providers` | List AI providers |
-| `POST` | `/api/settings/ai/providers` | Add AI provider |
-| `PUT` | `/api/settings/ai/providers/[id]` | Update AI provider |
-| `DELETE` | `/api/settings/ai/providers/[id]` | Delete AI provider |
-
-</details>
-
-<details>
-<summary><b>📤 Export & Backup</b></summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/export?format=json\|txt\|srt\|vtt` | Export recordings |
-| `POST` | `/api/backup` | Create backup of all user data |
-
-</details>
-
-<details>
-<summary><b>🏥 Health</b></summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/health` | Health check endpoint |
-
-</details>
-
-## 🤝 Contributing
-
-We welcome contributions from the community! Here's how you can help:
-
-### Ways to Contribute
-
-- 🐛 **Report bugs** - Found an issue? [Open a bug report](https://github.com/openplaud/openplaud/issues/new)
-- 💡 **Request features** - Have an idea? [Create a feature request](https://github.com/openplaud/openplaud/issues/new)
-- 📝 **Improve docs** - Documentation PRs are always welcome
-- 🔧 **Submit PRs** - See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
-- ⭐ **Star the repo** - Show your support!
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes following our code standards
-4. Test your changes (`bun test`)
-5. Commit with Gitflow conventions (`git commit -m 'feat: add amazing feature'`)
-6. Push to your fork (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
-## 📝 License
-
-**AGPL-3.0 License** – see [LICENSE](LICENSE) file for details
-
-This means:
-- ✅ Free to use, modify, and distribute
-- ✅ Can use for commercial purposes
-- ⚠️ Must open-source any modifications if you run it as a service
-- ⚠️ Must include original license and copyright
-
-## 🙏 Acknowledgments
-
-Originally created by **Perier**. Now developed and maintained by the OpenPlaud community.
-
-Made with ❤️ for Plaud Note users who want full control over their transcriptions.
-
-## 📚 Resources
-
-- 📖 [Documentation](docs/) - Detailed guides and API references
-- 🐛 [Issues](https://github.com/openplaud/openplaud/issues) - Bug reports and feature requests
-- 💬 [Discussions](https://github.com/openplaud/openplaud/discussions) - Long-form community discussions
-- 💬 [Discord](https://openplaud.com/discord) - Real-time community chat
-- 📝 [Changelog](CHANGELOG.md) - Version history and release notes
-
-## ⭐ Support the Project
-
-If OpenPlaud is useful to you, consider:
-- ⭐ Starring the repository
-- 🐛 Reporting bugs and suggesting features
-- 📝 Contributing code or documentation
-- 💬 Helping others in discussions
+在浏览器中打开 **http://localhost:3000** 并创建你的本地账号。引导向导将带你完成连接 Plaud 设备、配置 AI 提供商、存储和同步首选项的过程。在选择区域时，你可以选择**China (api.plaud.cn)**。
 
 ---
 
-<div align="center">
+## 📖 配置指南
 
-**[⬆ Back to Top](#-openplaud)**
+### 🔑 连接你的 Plaud 账号
 
-</div>
+OpenPlaud 默认直接使用你的邮箱登录 Plaud —— 就像官方 Plaud App 一样：
+
+1. 输入你在 [plaud.cn](https://plaud.cn) 或 plaud.ai 注册的邮箱
+2. 接收并输入验证码即可连接成功
+
+> **⚠️ 注意：如果你是通过微信 / Apple / Google 等第三方方式登录**
+> 
+> 由于无法直接进行 OAuth 跳转，你需要：
+> 1. 在浏览器新标签页登录 `web.plaud.cn`（或 `web.plaud.ai`）
+> 2. 按 F12 打开开发者工具的 **网络(Network)** 面板，然后刷新页面
+> 3. 点击任意发送到 `api.plaud.cn` (或 `api.plaud.ai`) 的请求
+> 4. 找到 `Authorization` 请求头，复制 `Bearer ` 后面的超长 Token 字符串
+> 5. 在 OpenPlaud 中选择 **"粘贴 Token (Paste token)"** 模式，选择对应区域并填入即可接入。
+
+### 💾 存储选项
+默认使用本地文件存储 (映射在 `/app/audio` 容器卷)。无需任何额外配置即可使用。
+如果你希望节省服务器磁盘空间，可以随时在设置中切换到兼容 S3 的对象存储（如阿里云 OSS、腾讯云 COS、MinIO 等）。
+
+### 🤖 AI 提供商设置
+你可以填入任何兼容 OpenAI API 格式的地址和密钥。例如国内的 DeepSeek、通义千问等，只需将他们的 Base URL 和 API Key 填入设置中即可，非常灵活。
+
+---
+
+## 📝 许可证
+
+**AGPL-3.0 许可证** – 详情见 [LICENSE](LICENSE) 文件
+
+本项目为开源项目，修改、分发及提供基于本项目的网络服务均需遵循原项目的 AGPL 开源协议。

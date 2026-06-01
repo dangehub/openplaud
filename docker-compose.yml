@@ -25,12 +25,12 @@ services:
       retries: 5
 
   app:
-    # Pull the published image by default.
+    # Pull the custom image by default.
     #   - `latest`  → newest stable release (recommended)
     #   - `0.1.0`   → pin to a specific version
     #   - `dev`     → rolling build from `main` (unstable, opt-in)
     # Override via OPENPLAUD_VERSION in .env. For local builds, see docker-compose.dev.yml.
-    image: ghcr.io/openplaud/openplaud:${OPENPLAUD_VERSION:-latest}
+    image: qudange/openplaud:${OPENPLAUD_VERSION:-latest}
     container_name: openplaud-app
     restart: unless-stopped
     ports:
