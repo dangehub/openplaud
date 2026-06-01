@@ -21,6 +21,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { findPreset, getVisiblePresets } from "@/lib/ai/provider-presets";
+import { useTranslation } from "@/lib/i18n";
 
 interface AddProviderDialogProps {
     open: boolean;
@@ -40,6 +41,8 @@ export function AddProviderDialog({
     onSuccess,
     isHosted = false,
 }: AddProviderDialogProps) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
     const visiblePresets = getVisiblePresets({ isHosted });
     const [provider, setProvider] = useState("");
     const [apiKey, setApiKey] = useState("");
@@ -62,7 +65,11 @@ export function AddProviderDialog({
         e.preventDefault();
 
         if (!provider || !apiKey) {
-            toast.error("Provider and API key are required");
+            toast.error(
+                isZh
+                    ? "服务商和 API 密钥为必填项"
+                    : "Provider and API key are required",
+            );
             return;
         }
 
@@ -83,10 +90,15 @@ export function AddProviderDialog({
 
             if (!response.ok) {
                 const data = await response.json().catch(() => null);
-                throw new Error(data?.error || "Failed to add provider");
+                throw new Error(
+                    data?.error ||
+                        (isZh ? "添加服务商失败" : "Failed to add provider"),
+                );
             }
 
-            toast.success("AI provider added successfully");
+            toast.success(
+                isZh ? "服务商添加成功" : "AI provider added successfully",
+            );
             onSuccess();
             onOpenChange(false);
 
@@ -100,7 +112,9 @@ export function AddProviderDialog({
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to add AI provider",
+                    : isZh
+                      ? "添加 AI 服务商失败"
+                      : "Failed to add AI provider",
             );
         } finally {
             setIsLoading(false);
@@ -113,18 +127,26 @@ export function AddProviderDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Add AI Provider</DialogTitle>
+                    <DialogTitle>
+                        {isZh ? "添加 AI 服务商" : "Add AI Provider"}
+                    </DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Provider</Label>
+                        <Label>{isZh ? "服务商" : "Provider"}</Label>
                         <Select
                             value={provider}
                             onValueChange={handleProviderChange}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a provider" />
+                                <SelectValue
+                                    placeholder={
+                                        isZh
+                                            ? "选择服务商"
+                                            : "Select a provider"
+                                    }
+                                />
                             </SelectTrigger>
                             <SelectContent>
                                 {visiblePresets.map((preset) => (
@@ -140,12 +162,15 @@ export function AddProviderDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="apiKey">API Key</Label>
+                        <Label htmlFor="apiKey">
+                            {isZh ? "API 密钥" : "API Key"}
+                        </Label>
                         <Input
                             id="apiKey"
                             type="password"
                             placeholder={
-                                selectedPreset?.placeholder || "Your API key"
+                                selectedPreset?.placeholder ||
+                                (isZh ? "您的 API 密钥" : "Your API key")
                             }
                             value={apiKey}
                             onChange={(e) => setApiKey(e.target.value)}
@@ -155,7 +180,9 @@ export function AddProviderDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="baseUrl">Base URL (Optional)</Label>
+                        <Label htmlFor="baseUrl">
+                            {isZh ? "接口地址 (可选)" : "Base URL (Optional)"}
+                        </Label>
                         <Input
                             id="baseUrl"
                             type="text"
@@ -167,14 +194,34 @@ export function AddProviderDialog({
                         />
                         {isHosted && (
                             <p className="text-xs text-muted-foreground">
-                                We can&apos;t reach{" "}
-                                <code className="font-mono">localhost</code> or
-                                other private addresses from the hosted app. To
-                                use LM Studio or Ollama, self-host Riffado (
-                                <code className="font-mono">
-                                    docker compose up
-                                </code>
-                                ).
+                                {isZh ? (
+                                    <>
+                                        在托管服务中无法直接访问{" "}
+                                        <code className="font-mono">
+                                            localhost
+                                        </code>{" "}
+                                        或其他私有局域网地址。要使用 LM Studio
+                                        或 Ollama，请在本地自行部署 Riffado (
+                                        <code className="font-mono">
+                                            docker compose up
+                                        </code>
+                                        )。
+                                    </>
+                                ) : (
+                                    <>
+                                        We can&apos;t reach{" "}
+                                        <code className="font-mono">
+                                            localhost
+                                        </code>{" "}
+                                        or other private addresses from the
+                                        hosted app. To use LM Studio or Ollama,
+                                        self-host Riffado (
+                                        <code className="font-mono">
+                                            docker compose up
+                                        </code>
+                                        ).
+                                    </>
+                                )}
                             </p>
                         )}
                     </div>
@@ -198,7 +245,11 @@ export function AddProviderDialog({
                                 }
                                 disabled={isLoading}
                             />
-                            <span>Use for transcription</span>
+                            <span>
+                                {isZh
+                                    ? "默认用于语音转写"
+                                    : "Use for transcription"}
+                            </span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -209,7 +260,11 @@ export function AddProviderDialog({
                                 }
                                 disabled={isLoading}
                             />
-                            <span>Use for AI enhancements</span>
+                            <span>
+                                {isZh
+                                    ? "默认用于大纲总结"
+                                    : "Use for AI enhancements"}
+                            </span>
                         </label>
                     </Panel>
 
@@ -220,7 +275,7 @@ export function AddProviderDialog({
                             disabled={isLoading}
                             className="flex-1"
                         >
-                            Cancel
+                            {isZh ? "取消" : "Cancel"}
                         </MetalButton>
                         <MetalButton
                             type="submit"
@@ -228,7 +283,13 @@ export function AddProviderDialog({
                             disabled={isLoading}
                             className="flex-1"
                         >
-                            {isLoading ? "Adding..." : "Add Provider"}
+                            {isLoading
+                                ? isZh
+                                    ? "正在添加..."
+                                    : "Adding..."
+                                : isZh
+                                  ? "添加服务商"
+                                  : "Add Provider"}
                         </MetalButton>
                     </div>
                 </form>

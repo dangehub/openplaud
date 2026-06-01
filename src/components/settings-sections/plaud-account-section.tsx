@@ -16,6 +16,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { getApiErrorMessage } from "@/lib/api-errors";
+import { useTranslation } from "@/lib/i18n";
 import { PLAUD_SERVERS, type PlaudServerKey } from "@/lib/plaud/servers";
 
 interface ConnectionInfo {
@@ -35,16 +36,21 @@ interface ConnectionInfo {
 function regionLabel(
     server: PlaudServerKey | undefined,
     apiBase?: string,
+    isZh?: boolean,
 ): string {
-    if (!server) return "Unknown";
+    if (!server) return isZh ? "未知" : "Unknown";
     if (server === "custom") return apiBase ?? PLAUD_SERVERS.custom.label;
-    if (server === "global") return "Global";
-    if (server === "eu") return "EU (Frankfurt)";
-    if (server === "apse1") return "Asia Pacific (Singapore)";
+    if (server === "global") return isZh ? "全球服" : "Global";
+    if (server === "eu") return isZh ? "欧盟服 (法兰克福)" : "EU (Frankfurt)";
+    if (server === "apse1")
+        return isZh ? "亚太服 (新加坡)" : "Asia Pacific (Singapore)";
     return server;
 }
 
 export function PlaudAccountSection() {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const [info, setInfo] = useState<ConnectionInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [confirmOpen, setConfirmOpen] = useState<
@@ -58,7 +64,10 @@ export function PlaudAccountSection() {
             const res = await fetch("/api/plaud/connection");
             if (!res.ok) {
                 throw new Error(
-                    await getApiErrorMessage(res, "Failed to load connection"),
+                    await getApiErrorMessage(
+                        res,
+                        isZh ? "加载连接失败" : "Failed to load connection",
+                    ),
                 );
             }
             const data: ConnectionInfo = await res.json();
@@ -69,7 +78,7 @@ export function PlaudAccountSection() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [isZh]);
 
     useEffect(() => {
         fetchConnection();
@@ -78,22 +87,31 @@ export function PlaudAccountSection() {
     const disconnect = useCallback(async (): Promise<boolean> => {
         const res = await fetch("/api/plaud/connection", { method: "DELETE" });
         if (!res.ok) {
-            const msg = await getApiErrorMessage(res, "Failed to disconnect");
+            const msg = await getApiErrorMessage(
+                res,
+                isZh ? "断开连接失败" : "Failed to disconnect",
+            );
             throw new Error(msg);
         }
         return true;
-    }, []);
+    }, [isZh]);
 
     const handleDisconnect = async () => {
         setIsMutating(true);
         try {
             await disconnect();
-            toast.success("Plaud account disconnected");
+            toast.success(
+                isZh ? "Plaud 账号已断开连接" : "Plaud account disconnected",
+            );
             setConfirmOpen(null);
             await fetchConnection();
         } catch (error) {
             toast.error(
-                error instanceof Error ? error.message : "Failed to disconnect",
+                error instanceof Error
+                    ? error.message
+                    : isZh
+                      ? "断开连接失败"
+                      : "Failed to disconnect",
             );
         } finally {
             setIsMutating(false);
@@ -120,7 +138,9 @@ export function PlaudAccountSection() {
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to unlink current account",
+                    : isZh
+                      ? "解除当前账号绑定失败"
+                      : "Failed to unlink current account",
             );
         } finally {
             setIsMutating(false);
@@ -141,20 +161,25 @@ export function PlaudAccountSection() {
     }
 
     const currentEmail = info?.plaudEmail ?? null;
-    const currentEmailDisplay = currentEmail ?? "the current account";
+    const currentEmailDisplay =
+        currentEmail ?? (isZh ? "当前账号" : "the current account");
 
     return (
         <div className="space-y-6">
             <div>
                 <SettingsSectionHeader
-                    title="Plaud Account"
-                    description="Your connection to the Plaud cloud used to pull recordings."
+                    title={isZh ? "Plaud 账号" : "Plaud Account"}
+                    description={
+                        isZh
+                            ? "您用于从 Plaud 云端同步录音的账号连接。"
+                            : "Your connection to the Plaud cloud used to pull recordings."
+                    }
                     icon={Mic}
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                    The Plaud account Riffado pulls recordings from. Switching
-                    accounts keeps your existing recordings; only future syncs
-                    change.
+                    {isZh
+                        ? "Riffado 从此 Plaud 账号同步录音。切换账号会保留您现有的录音，只有未来的同步会发生改变。"
+                        : "The Plaud account Riffado pulls recordings from. Switching accounts keeps your existing recordings; only future syncs change."}
                 </p>
             </div>
 
@@ -171,19 +196,26 @@ export function PlaudAccountSection() {
                                         </span>
                                     ) : (
                                         <span className="text-muted-foreground">
-                                            Connected (email unknown)
+                                            {isZh
+                                                ? "已连接 (未获取到邮箱)"
+                                                : "Connected (email unknown)"}
                                         </span>
                                     )}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    Region:{" "}
-                                    {regionLabel(info.server, info.apiBase)}
+                                    {isZh ? "区域: " : "Region: "}{" "}
+                                    {regionLabel(
+                                        info.server,
+                                        info.apiBase,
+                                        isZh,
+                                    )}
                                     {!currentEmail && (
                                         <>
                                             {" · "}
                                             <span>
-                                                Use “Switch account” below to
-                                                display the email
+                                                {isZh
+                                                    ? "使用下方的“切换账号”可以显示邮箱"
+                                                    : "Use “Switch account” below to display the email"}
                                             </span>
                                         </>
                                     )}
@@ -197,7 +229,7 @@ export function PlaudAccountSection() {
                                 onClick={() => setConfirmOpen("switch")}
                             >
                                 <RefreshCw className="size-4 mr-2" />
-                                Switch account
+                                {isZh ? "切换账号" : "Switch account"}
                             </Button>
                             <Button
                                 variant="ghost"
@@ -205,7 +237,7 @@ export function PlaudAccountSection() {
                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                                 <Link2Off className="size-4 mr-2" />
-                                Disconnect
+                                {isZh ? "断开连接" : "Disconnect"}
                             </Button>
                         </div>
                     </CardContent>
@@ -214,8 +246,9 @@ export function PlaudAccountSection() {
                 <Card className="py-4">
                     <CardContent className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                            No Plaud account connected. Sign in below to start
-                            syncing recordings.
+                            {isZh
+                                ? "尚未连接 Plaud 账号。请在下方登录以开始同步录音。"
+                                : "No Plaud account connected. Sign in below to start syncing recordings."}
                         </p>
                         <PlaudConnectTabs
                             onConnected={() => fetchConnection()}
@@ -236,30 +269,61 @@ export function PlaudAccountSection() {
                     <DialogHeader>
                         <DialogTitle>
                             {confirmOpen === "switch"
-                                ? "Switch Plaud account?"
-                                : "Disconnect Plaud account?"}
+                                ? isZh
+                                    ? "切换 Plaud 账号？"
+                                    : "Switch Plaud account?"
+                                : isZh
+                                  ? "断开 Plaud 账号？"
+                                  : "Disconnect Plaud account?"}
                         </DialogTitle>
                         <DialogDescription asChild>
                             <div className="space-y-2 pt-2">
                                 {confirmOpen === "switch" ? (
                                     <p>
-                                        This will unlink{" "}
-                                        <span className="font-mono text-foreground">
-                                            {currentEmailDisplay}
-                                        </span>{" "}
-                                        and let you sign in with a different
-                                        Plaud account. Your existing recordings
-                                        stay; only future syncs will come from
-                                        the new account.
+                                        {isZh ? (
+                                            <>
+                                                这将解除与{" "}
+                                                <span className="font-mono text-foreground">
+                                                    {currentEmailDisplay}
+                                                </span>{" "}
+                                                的绑定，并允许您登录不同的 Plaud
+                                                账号。您现有的录音将会保留；只有未来的同步会来自新账号。
+                                            </>
+                                        ) : (
+                                            <>
+                                                This will unlink{" "}
+                                                <span className="font-mono text-foreground">
+                                                    {currentEmailDisplay}
+                                                </span>{" "}
+                                                and let you sign in with a
+                                                different Plaud account. Your
+                                                existing recordings stay; only
+                                                future syncs will come from the
+                                                new account.
+                                            </>
+                                        )}
                                     </p>
                                 ) : (
                                     <p>
-                                        This will unlink{" "}
-                                        <span className="font-mono text-foreground">
-                                            {currentEmailDisplay}
-                                        </span>
-                                        . Your existing recordings stay, but
-                                        sync will stop until you reconnect.
+                                        {isZh ? (
+                                            <>
+                                                这将解除与{" "}
+                                                <span className="font-mono text-foreground">
+                                                    {currentEmailDisplay}
+                                                </span>{" "}
+                                                的绑定。您的现有录音将会保留，但同步将会停止，直到您重新连接。
+                                            </>
+                                        ) : (
+                                            <>
+                                                This will unlink{" "}
+                                                <span className="font-mono text-foreground">
+                                                    {currentEmailDisplay}
+                                                </span>
+                                                . Your existing recordings stay,
+                                                but sync will stop until you
+                                                reconnect.
+                                            </>
+                                        )}
                                     </p>
                                 )}
                             </div>
@@ -271,14 +335,20 @@ export function PlaudAccountSection() {
                             onClick={() => setConfirmOpen(null)}
                             disabled={isMutating}
                         >
-                            Cancel
+                            {isZh ? "取消" : "Cancel"}
                         </Button>
                         {confirmOpen === "switch" ? (
                             <Button
                                 onClick={handleSwitchConfirmed}
                                 disabled={isMutating}
                             >
-                                {isMutating ? "Unlinking…" : "Continue"}
+                                {isMutating
+                                    ? isZh
+                                        ? "正在解绑..."
+                                        : "Unlinking…"
+                                    : isZh
+                                      ? "继续"
+                                      : "Continue"}
                             </Button>
                         ) : (
                             <Button
@@ -286,7 +356,13 @@ export function PlaudAccountSection() {
                                 onClick={handleDisconnect}
                                 disabled={isMutating}
                             >
-                                {isMutating ? "Disconnecting…" : "Disconnect"}
+                                {isMutating
+                                    ? isZh
+                                        ? "正在断开..."
+                                        : "Disconnecting…"
+                                    : isZh
+                                      ? "断开连接"
+                                      : "Disconnect"}
                             </Button>
                         )}
                     </DialogFooter>
@@ -301,10 +377,15 @@ export function PlaudAccountSection() {
             >
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Sign in to new Plaud account</DialogTitle>
+                        <DialogTitle>
+                            {isZh
+                                ? "登录新的 Plaud 账号"
+                                : "Sign in to new Plaud account"}
+                        </DialogTitle>
                         <DialogDescription>
-                            Choose how you want to connect the Plaud account
-                            you’re switching to.
+                            {isZh
+                                ? "选择您希望用来连接新 Plaud 账号的方式。"
+                                : "Choose how you want to connect the Plaud account you’re switching to."}
                         </DialogDescription>
                     </DialogHeader>
                     {switchDialogOpen && (

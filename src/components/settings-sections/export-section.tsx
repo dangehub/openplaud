@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
+import { useTranslation } from "@/lib/i18n";
 
 const exportFormatOptions = [
     { label: "JSON", value: "json", description: "Structured data format" },
@@ -35,6 +36,51 @@ interface ExportSectionProps {
 }
 
 export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
+    const getExportFormatDescription = (value: string) => {
+        if (!isZh) {
+            return (
+                exportFormatOptions.find((opt) => opt.value === value)
+                    ?.description || ""
+            );
+        }
+        switch (value) {
+            case "json":
+                return "结构化数据格式";
+            case "txt":
+                return "纯文本格式";
+            case "srt":
+                return "SRT 字幕格式";
+            case "vtt":
+                return "WebVTT 字幕格式";
+            default:
+                return "";
+        }
+    };
+
+    const getBackupFrequencyLabel = (value: string) => {
+        if (!isZh) {
+            return (
+                backupFrequencyOptions.find((opt) => opt.value === value)
+                    ?.label || "Never"
+            );
+        }
+        switch (value) {
+            case "never":
+                return "从不";
+            case "daily":
+                return "每天";
+            case "weekly":
+                return "每周";
+            case "monthly":
+                return "每月";
+            default:
+                return "从不";
+        }
+    };
+
     const { isLoadingSettings, isSavingSettings, setIsLoadingSettings } =
         useSettings();
     const [defaultExportFormat, setDefaultExportFormat] = useState("json");
@@ -105,7 +151,11 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
                 if (typeof prev === "string" || prev === null)
                     setBackupFrequency(prev);
             }
-            toast.error("Failed to save settings. Changes reverted.");
+            toast.error(
+                isZh
+                    ? "保存设置失败。更改已撤销。"
+                    : "Failed to save settings. Changes reverted.",
+            );
         }
     };
 
@@ -131,9 +181,11 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
 
-            toast.success("Export completed");
+            toast.success(isZh ? "数据导出已完成" : "Export completed");
         } catch {
-            toast.error("Failed to export recordings");
+            toast.error(
+                isZh ? "导出录音数据失败" : "Failed to export recordings",
+            );
         } finally {
             setIsExporting(false);
         }
@@ -159,9 +211,9 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
 
-            toast.success("Backup created");
+            toast.success(isZh ? "系统备份已创建" : "Backup created");
         } catch {
-            toast.error("Failed to create backup");
+            toast.error(isZh ? "创建系统备份失败" : "Failed to create backup");
         } finally {
             setIsBackingUp(false);
         }
@@ -178,13 +230,19 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
     return (
         <div className="space-y-6">
             <SettingsSectionHeader
-                title="Export & Backup"
-                description="Take your data with you — recordings, transcripts, and summaries."
+                title={isZh ? "数据导出与备份" : "Export & Backup"}
+                description={
+                    isZh
+                        ? "导出您的全部数据 — 包括录音文件、转写文本以及 AI 大纲总结。"
+                        : "Take your data with you — recordings, transcripts, and summaries."
+                }
                 icon={Download}
             />
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="export-format">Default export format</Label>
+                    <Label htmlFor="export-format">
+                        {isZh ? "默认导出格式" : "Default export format"}
+                    </Label>
                     <Select
                         value={defaultExportFormat}
                         onValueChange={(value) => {
@@ -197,9 +255,7 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
                     >
                         <SelectTrigger id="export-format" className="w-full">
                             <SelectValue>
-                                {exportFormatOptions.find(
-                                    (opt) => opt.value === defaultExportFormat,
-                                )?.label || "JSON"}
+                                {defaultExportFormat.toUpperCase()}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -211,7 +267,9 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
                                     <div>
                                         <div>{option.label}</div>
                                         <div className="text-xs text-muted-foreground">
-                                            {option.description}
+                                            {getExportFormatDescription(
+                                                option.value,
+                                            )}
                                         </div>
                                     </div>
                                 </SelectItem>
@@ -224,14 +282,18 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
                     <div className="space-y-0.5 flex-1">
                         <div className="flex items-center gap-2">
                             <Label htmlFor="auto-export" className="text-base">
-                                Auto-export new recordings
+                                {isZh
+                                    ? "新录音自动导出"
+                                    : "Auto-export new recordings"}
                             </Label>
                             <span className="text-xs bg-muted px-2 py-0.5 rounded">
-                                Coming soon
+                                {isZh ? "即将上线" : "Coming soon"}
                             </span>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Automatically export recordings when they are synced
+                            {isZh
+                                ? "在录音同步完成时自动导出到指定格式"
+                                : "Automatically export recordings when they are synced"}
                         </p>
                     </div>
                     <Switch
@@ -250,10 +312,10 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
                 <div className="space-y-2 opacity-60">
                     <div className="flex items-center gap-2">
                         <Label htmlFor="backup-frequency">
-                            Backup frequency
+                            {isZh ? "自动备份频率" : "Backup frequency"}
                         </Label>
                         <span className="text-xs bg-muted px-2 py-0.5 rounded">
-                            Coming soon
+                            {isZh ? "即将上线" : "Coming soon"}
                         </span>
                     </div>
                     <Select
@@ -269,11 +331,9 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
                     >
                         <SelectTrigger id="backup-frequency" className="w-full">
                             <SelectValue>
-                                {backupFrequencyOptions.find(
-                                    (opt) =>
-                                        opt.value ===
-                                        (backupFrequency || "never"),
-                                )?.label || "Never"}
+                                {getBackupFrequencyLabel(
+                                    backupFrequency || "never",
+                                )}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -282,20 +342,24 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
                                     key={option.value}
                                     value={option.value}
                                 >
-                                    {option.label}
+                                    {getBackupFrequencyLabel(option.value)}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                        How often to automatically create backups
+                        {isZh
+                            ? "自动创建系统备份的频率间隔"
+                            : "How often to automatically create backups"}
                     </p>
                 </div>
             </div>
 
             <div className="pt-4 border-t space-y-3">
                 <div className="space-y-2">
-                    <Label className="text-base">Manual Actions</Label>
+                    <Label className="text-base">
+                        {isZh ? "手动操作" : "Manual Actions"}
+                    </Label>
                     <Button
                         onClick={async () => {
                             try {
@@ -310,17 +374,23 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
                                 });
                                 onReRunOnboarding?.();
                             } catch {
-                                toast.error("Failed to reset onboarding");
+                                toast.error(
+                                    isZh
+                                        ? "重置新手引导失败"
+                                        : "Failed to reset onboarding",
+                                );
                             }
                         }}
                         variant="outline"
                         className="w-full"
                     >
                         <RefreshCw className="size-4 mr-2" />
-                        Re-run Onboarding
+                        {isZh ? "重新运行新手引导" : "Re-run Onboarding"}
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                        Reset onboarding to see it again on your next visit
+                        {isZh
+                            ? "重置引导流程，在您下一次访问时将重新展现引导卡片"
+                            : "Reset onboarding to see it again on your next visit"}
                     </p>
                     <div className="flex gap-2 pt-2">
                         <Button
@@ -332,12 +402,12 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
                             {isExporting ? (
                                 <>
                                     <div className="animate-spin size-4 mr-2 border-2 border-primary border-t-transparent rounded-full" />
-                                    Exporting…
+                                    {isZh ? "正在导出..." : "Exporting…"}
                                 </>
                             ) : (
                                 <>
                                     <Download className="size-4 mr-2" />
-                                    Export All
+                                    {isZh ? "导出全部数据" : "Export All"}
                                 </>
                             )}
                         </Button>
@@ -350,12 +420,12 @@ export function ExportSection({ onReRunOnboarding }: ExportSectionProps) {
                             {isBackingUp ? (
                                 <>
                                     <div className="animate-spin size-4 mr-2 border-2 border-primary border-t-transparent rounded-full" />
-                                    Creating…
+                                    {isZh ? "正在创建..." : "Creating…"}
                                 </>
                             ) : (
                                 <>
                                     <Download className="size-4 mr-2" />
-                                    Create Backup
+                                    {isZh ? "创建系统备份" : "Create Backup"}
                                 </>
                             )}
                         </Button>

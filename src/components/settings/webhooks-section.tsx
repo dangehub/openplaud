@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useConfirm } from "@/components/confirm-dialog";
 import { SettingsSectionHeader } from "@/components/settings/section-header";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 import { WebhookDeliveriesDialog } from "./webhook-deliveries-dialog";
 import { WebhookEditorDialog } from "./webhook-editor-dialog";
 import {
@@ -15,6 +16,8 @@ import {
 } from "./webhook-types";
 
 export function WebhooksSection() {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
     const confirm = useConfirm();
     const [webhooks, setWebhooks] = useState<WebhookEndpoint[]>([]);
     const [events, setEvents] = useState<string[]>(DEFAULT_WEBHOOK_EVENTS);
@@ -36,11 +39,11 @@ export function WebhooksSection() {
             setWebhooks(data.webhooks);
             setEvents(data.events);
         } catch {
-            toast.error("Failed to load webhooks");
+            toast.error(isZh ? "加载 Webhook 失败" : "Failed to load webhooks");
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [isZh]);
 
     useEffect(() => {
         refreshWebhooks();
@@ -53,11 +56,12 @@ export function WebhooksSection() {
 
     const handleDelete = (webhookId: string) => {
         void confirm({
-            title: "Delete this webhook?",
-            description:
-                "Deliveries will stop immediately. You'll have to recreate the endpoint and re-share its signing secret with any consumers.",
-            confirmLabel: "Delete",
-            pendingLabel: "Deleting…",
+            title: isZh ? "删除此 Webhook？" : "Delete this webhook?",
+            description: isZh
+                ? "递送将立即停止。您必须重新创建端点并与所有消费者重新共享其签名密钥。"
+                : "Deliveries will stop immediately. You'll have to recreate the endpoint and re-share its signing secret with any consumers.",
+            confirmLabel: isZh ? "删除" : "Delete",
+            pendingLabel: isZh ? "正在删除…" : "Deleting…",
             destructive: true,
             onConfirm: async () => {
                 const response = await fetch(
@@ -65,23 +69,29 @@ export function WebhooksSection() {
                     { method: "DELETE" },
                 );
                 if (!response.ok) throw new Error("Failed to delete webhook");
-                toast.success("Webhook deleted");
+                toast.success(isZh ? "Webhook 已删除" : "Webhook deleted");
                 await refreshWebhooks();
             },
-            errorMessage: "Failed to delete webhook",
+            errorMessage: isZh
+                ? "删除 Webhook 失败"
+                : "Failed to delete webhook",
         });
     };
 
     return (
         <div className="space-y-6">
             <SettingsSectionHeader
-                title="Webhooks"
-                description="Outbound HTTP notifications for recording, transcript, and summary events."
+                title={isZh ? "Webhooks" : "Webhooks"}
+                description={
+                    isZh
+                        ? "录音、转写和总结事件的出站 HTTP 通知。"
+                        : "Outbound HTTP notifications for recording, transcript, and summary events."
+                }
                 icon={Webhook}
                 action={
                     <Button size="sm" onClick={() => openEditor(null)}>
                         <Plus className="size-4" />
-                        Add Webhook
+                        {isZh ? "添加 Webhook" : "Add Webhook"}
                     </Button>
                 }
             />
@@ -93,10 +103,12 @@ export function WebhooksSection() {
             ) : webhooks.length === 0 ? (
                 <div className="text-center py-12 border rounded-lg">
                     <Webhook className="size-12 mx-auto mb-3 text-muted-foreground" />
-                    <h3 className="font-semibold mb-2">No webhooks</h3>
+                    <h3 className="font-semibold mb-2">
+                        {isZh ? "暂无 Webhook" : "No webhooks"}
+                    </h3>
                     <Button size="sm" onClick={() => openEditor(null)}>
                         <Plus className="size-4" />
-                        Add Webhook
+                        {isZh ? "添加 Webhook" : "Add Webhook"}
                     </Button>
                 </div>
             ) : (
@@ -144,6 +156,9 @@ function WebhookRow({
     onDelete: (webhookId: string) => void;
     onShowDeliveries: (webhook: WebhookEndpoint) => void;
 }) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     return (
         <div className="space-y-3 rounded-lg border p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -159,7 +174,13 @@ function WebhookRow({
                                     : "text-muted-foreground"
                             }`}
                         >
-                            {webhook.enabled ? "Enabled" : "Disabled"}
+                            {webhook.enabled
+                                ? isZh
+                                    ? "已启用"
+                                    : "Enabled"
+                                : isZh
+                                  ? "已禁用"
+                                  : "Disabled"}
                         </span>
                         {webhook.lastDeliveryStatus && (
                             <span className="rounded border px-2 py-0.5 text-xs">
@@ -181,8 +202,8 @@ function WebhookRow({
                         ))}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        Last delivery:{" "}
-                        {formatWebhookDate(webhook.lastDeliveryAt)}
+                        {isZh ? "上次递送：" : "Last delivery: "}{" "}
+                        {formatWebhookDate(webhook.lastDeliveryAt, isZh)}
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -191,13 +212,13 @@ function WebhookRow({
                         size="sm"
                         onClick={() => onShowDeliveries(webhook)}
                     >
-                        Deliveries
+                        {isZh ? "递送记录" : "Deliveries"}
                     </Button>
                     <Button
                         variant="outline"
                         size="icon"
                         onClick={() => onEdit(webhook)}
-                        aria-label="Edit webhook"
+                        aria-label={isZh ? "编辑 Webhook" : "Edit webhook"}
                     >
                         <Pencil className="size-4" />
                     </Button>
@@ -205,7 +226,7 @@ function WebhookRow({
                         variant="outline"
                         size="icon"
                         onClick={() => onDelete(webhook.id)}
-                        aria-label="Delete webhook"
+                        aria-label={isZh ? "删除 Webhook" : "Delete webhook"}
                     >
                         <Trash2 className="size-4 text-destructive" />
                     </Button>

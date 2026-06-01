@@ -9,6 +9,7 @@ import { EditProviderDialog } from "@/components/settings/edit-provider-dialog";
 import { SettingsSectionHeader } from "@/components/settings/section-header";
 import { PromptManager } from "@/components/settings-sections/prompt-manager";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 type AISubSection = "providers" | "prompts";
 
@@ -48,6 +49,9 @@ export function ProvidersSection({
     initialProviders = EMPTY_PROVIDERS,
     isHosted = false,
 }: ProvidersSectionProps) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const confirm = useConfirm();
     const [providers, setProviders] = useState<Provider[]>(initialProviders);
     const [isAddProviderOpen, setIsAddProviderOpen] = useState(false);
@@ -65,7 +69,9 @@ export function ProvidersSection({
             const data = await response.json();
             setProviders(data.providers);
         } catch {
-            toast.error("Failed to refresh providers");
+            toast.error(
+                isZh ? "刷新服务商列表失败" : "Failed to refresh providers",
+            );
         }
     };
 
@@ -76,11 +82,12 @@ export function ProvidersSection({
 
     const handleDelete = (id: string) => {
         void confirm({
-            title: "Delete this provider?",
-            description:
-                "Its API key will be removed from this account. Recordings transcribed or summarized through it keep their data, but you'll need to re-add the provider to use it again.",
-            confirmLabel: "Delete",
-            pendingLabel: "Deleting…",
+            title: isZh ? "确定删除此提供商吗？" : "Delete this provider?",
+            description: isZh
+                ? "此提供商的 API 密钥将从您的账户中彻底移除。已经生成过转录或总结的录音数据将得以保留，但未来再次使用需要重新绑定该提供商。"
+                : "Its API key will be removed from this account. Recordings transcribed or summarized through it keep their data, but you'll need to re-add the provider to use it again.",
+            confirmLabel: isZh ? "删除" : "Delete",
+            pendingLabel: isZh ? "正在删除…" : "Deleting…",
             destructive: true,
             onConfirm: async () => {
                 setDeletingId(id);
@@ -93,7 +100,11 @@ export function ProvidersSection({
                         const error = await response.json();
                         throw new Error(error.error || "Failed to delete");
                     }
-                    toast.success("Provider deleted successfully");
+                    toast.success(
+                        isZh
+                            ? "服务商删除成功"
+                            : "Provider deleted successfully",
+                    );
                     await refreshProviders();
                 } finally {
                     setDeletingId(null);
@@ -107,8 +118,12 @@ export function ProvidersSection({
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <SettingsSectionHeader
-                        title="AI Providers"
-                        description="Connect transcription and summary providers. Anything OpenAI-compatible works."
+                        title={isZh ? "AI 服务提供商" : "AI Providers"}
+                        description={
+                            isZh
+                                ? "配置音频转写和智能大纲的 AI 服务对接。支持任何兼容 OpenAI 协议的接口。"
+                                : "Connect transcription and summary providers. Anything OpenAI-compatible works."
+                        }
                         icon={Bot}
                     />
                     {aiSubSection === "providers" && (
@@ -117,7 +132,7 @@ export function ProvidersSection({
                             size="sm"
                         >
                             <Plus className="size-4 mr-2" />
-                            Add Provider
+                            {isZh ? "添加提供商" : "Add Provider"}
                         </Button>
                     )}
                 </div>
@@ -133,7 +148,7 @@ export function ProvidersSection({
                                 : "border-transparent text-muted-foreground hover:text-foreground"
                         }`}
                     >
-                        Providers
+                        {isZh ? "服务提供商" : "Providers"}
                     </button>
                     <button
                         type="button"
@@ -145,7 +160,7 @@ export function ProvidersSection({
                         }`}
                     >
                         <Sparkles className="size-4 inline mr-2" />
-                        Prompts
+                        {isZh ? "智能提示词" : "Prompts"}
                     </button>
                 </div>
 
@@ -156,6 +171,7 @@ export function ProvidersSection({
                         onAdd={() => setIsAddProviderOpen(true)}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
+                        isZh={isZh}
                     />
                 )}
 
@@ -202,24 +218,30 @@ function ProvidersList({
     onAdd,
     onEdit,
     onDelete,
+    isZh,
 }: {
     providers: Provider[];
     deletingId: string | null;
     onAdd: () => void;
     onEdit: (provider: Provider) => void;
     onDelete: (id: string) => void;
+    isZh: boolean;
 }) {
     if (providers.length === 0) {
         return (
             <div className="text-center py-12">
                 <Bot className="size-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">No providers configured</h3>
+                <h3 className="font-semibold mb-2">
+                    {isZh ? "未绑定任何服务商" : "No providers configured"}
+                </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                    Add an AI provider to enable transcription
+                    {isZh
+                        ? "添加 AI 提供商以启用云端语音转写与智能总结"
+                        : "Add an AI provider to enable transcription"}
                 </p>
                 <Button onClick={onAdd} size="sm">
                     <Plus className="size-4 mr-2" />
-                    Add Provider
+                    {isZh ? "添加提供商" : "Add Provider"}
                 </Button>
             </div>
         );
@@ -238,18 +260,19 @@ function ProvidersList({
                             </h3>
                             {provider.isDefaultTranscription && (
                                 <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded border border-primary/20">
-                                    Transcription
+                                    {isZh ? "语音转写" : "Transcription"}
                                 </span>
                             )}
                             {provider.isDefaultEnhancement && (
                                 <span className="text-xs px-2 py-0.5 bg-purple-500/10 text-purple-600 rounded border border-purple-500/20">
-                                    Enhancement
+                                    {isZh ? "大纲总结" : "Enhancement"}
                                 </span>
                             )}
                         </div>
                         {provider.defaultModel && (
                             <p className="text-sm text-muted-foreground">
-                                Model: {provider.defaultModel}
+                                {isZh ? "默认模型：" : "Model: "}
+                                {provider.defaultModel}
                             </p>
                         )}
                         {provider.baseUrl && (

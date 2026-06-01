@@ -26,6 +26,7 @@ import {
     getVisiblePresets,
     isLocalPreset,
 } from "@/lib/ai/provider-presets";
+import { useTranslation } from "@/lib/i18n";
 
 interface Provider {
     id: string;
@@ -56,6 +57,8 @@ export function EditProviderDialog({
     onSuccess,
     isHosted = false,
 }: EditProviderDialogProps) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
     const visiblePresets = getVisiblePresets({ isHosted });
     // Legacy case: a hosted user has an existing LM Studio / Ollama provider
     // (added before hosted enforcement, or imported). Keep their currently
@@ -106,12 +109,14 @@ export function EditProviderDialog({
         e.preventDefault();
 
         if (!providerName) {
-            toast.error("Provider name is required");
+            toast.error(
+                isZh ? "服务商名称为必填项" : "Provider name is required",
+            );
             return;
         }
 
         if (!provider?.id) {
-            toast.error("Provider ID is missing");
+            toast.error(isZh ? "服务商 ID 丢失" : "Provider ID is missing");
             return;
         }
 
@@ -145,10 +150,15 @@ export function EditProviderDialog({
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || "Failed to update provider");
+                throw new Error(
+                    error.error ||
+                        (isZh ? "更新服务商失败" : "Failed to update provider"),
+                );
             }
 
-            toast.success("AI provider updated successfully");
+            toast.success(
+                isZh ? "服务商更新成功" : "AI provider updated successfully",
+            );
             onSuccess();
             onOpenChange(false);
 
@@ -162,7 +172,9 @@ export function EditProviderDialog({
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to update AI provider",
+                    : isZh
+                      ? "更新 AI 服务商失败"
+                      : "Failed to update AI provider",
             );
         } finally {
             setIsLoading(false);
@@ -177,19 +189,27 @@ export function EditProviderDialog({
         <Dialog open={open} onOpenChange={onOpenChange} key={provider.id}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Edit AI Provider</DialogTitle>
+                    <DialogTitle>
+                        {isZh ? "编辑 AI 服务商" : "Edit AI Provider"}
+                    </DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Provider</Label>
+                        <Label>{isZh ? "服务商" : "Provider"}</Label>
                         <Select
                             value={providerName}
                             onValueChange={handleProviderChange}
                             disabled={isLoading}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a provider" />
+                                <SelectValue
+                                    placeholder={
+                                        isZh
+                                            ? "选择服务商"
+                                            : "Select a provider"
+                                    }
+                                />
                             </SelectTrigger>
                             <SelectContent>
                                 {visiblePresets.map((preset) => (
@@ -206,8 +226,11 @@ export function EditProviderDialog({
                                         value={legacyLocalProvider}
                                         disabled
                                     >
-                                        {legacyLocalProvider} (not available on
-                                        hosted)
+                                        {legacyLocalProvider} (
+                                        {isZh
+                                            ? "在托管版不可用"
+                                            : "not available on hosted"}
+                                        )
                                     </SelectItem>
                                 )}
                             </SelectContent>
@@ -216,28 +239,48 @@ export function EditProviderDialog({
                             <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
                                 <AlertTriangle className="size-3.5 shrink-0 mt-0.5" />
                                 <span>
-                                    {legacyLocalProvider} isn&apos;t usable on
-                                    the hosted app — we can&apos;t reach your
-                                    machine. Delete this provider and re-add one
-                                    with a public endpoint, or self-host Riffado
-                                    (
-                                    <code className="font-mono">
-                                        docker compose up
-                                    </code>
-                                    ).
+                                    {isZh ? (
+                                        <>
+                                            {legacyLocalProvider}{" "}
+                                            在托管版中无法使用 —
+                                            我们无法访问您的本地机器。请删除该服务商并添加带有公共接口地址的服务商，或在本地自行部署
+                                            Riffado (
+                                            <code className="font-mono">
+                                                docker compose up
+                                            </code>
+                                            )。
+                                        </>
+                                    ) : (
+                                        <>
+                                            {legacyLocalProvider} isn&apos;t
+                                            usable on the hosted app — we
+                                            can&apos;t reach your machine.
+                                            Delete this provider and re-add one
+                                            with a public endpoint, or self-host
+                                            Riffado (
+                                            <code className="font-mono">
+                                                docker compose up
+                                            </code>
+                                            ).
+                                        </>
+                                    )}
                                 </span>
                             </div>
                         )}
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="apiKey">API Key</Label>
+                        <Label htmlFor="apiKey">
+                            {isZh ? "API 密钥" : "API Key"}
+                        </Label>
                         <Input
                             id="apiKey"
                             type="password"
                             placeholder={
                                 selectedPreset?.placeholder ||
-                                "Enter a new key to replace the current one"
+                                (isZh
+                                    ? "输入新密钥以替换当前密钥"
+                                    : "Enter a new key to replace the current one")
                             }
                             value={apiKey}
                             onChange={(e) => setApiKey(e.target.value)}
@@ -247,15 +290,17 @@ export function EditProviderDialog({
                         <div className="text-xs text-muted-foreground flex items-center gap-2">
                             <Shield className="size-3.5 shrink-0" />
                             <span>
-                                For security, the saved API key is never shown.
-                                Leave this blank to keep your current key, or
-                                enter a new key to replace it.
+                                {isZh
+                                    ? "出于安全考虑，已保存的 API 密钥不会在此显示。留空将保留当前密钥，输入新密钥将进行覆盖替换。"
+                                    : "For security, the saved API key is never shown. Leave this blank to keep your current key, or enter a new key to replace it."}
                             </span>
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="baseUrl">Base URL (Optional)</Label>
+                        <Label htmlFor="baseUrl">
+                            {isZh ? "接口地址 (可选)" : "Base URL (Optional)"}
+                        </Label>
                         <Input
                             id="baseUrl"
                             type="text"
@@ -267,14 +312,34 @@ export function EditProviderDialog({
                         />
                         {isHosted && (
                             <p className="text-xs text-muted-foreground">
-                                We can&apos;t reach{" "}
-                                <code className="font-mono">localhost</code> or
-                                other private addresses from the hosted app. To
-                                use LM Studio or Ollama, self-host Riffado (
-                                <code className="font-mono">
-                                    docker compose up
-                                </code>
-                                ).
+                                {isZh ? (
+                                    <>
+                                        在托管服务中无法直接访问{" "}
+                                        <code className="font-mono">
+                                            localhost
+                                        </code>{" "}
+                                        或其他私有局域网地址。要使用 LM Studio
+                                        或 Ollama，请在本地自行部署 Riffado (
+                                        <code className="font-mono">
+                                            docker compose up
+                                        </code>
+                                        )。
+                                    </>
+                                ) : (
+                                    <>
+                                        We can&apos;t reach{" "}
+                                        <code className="font-mono">
+                                            localhost
+                                        </code>{" "}
+                                        or other private addresses from the
+                                        hosted app. To use LM Studio or Ollama,
+                                        self-host Riffado (
+                                        <code className="font-mono">
+                                            docker compose up
+                                        </code>
+                                        ).
+                                    </>
+                                )}
                             </p>
                         )}
                     </div>
@@ -298,7 +363,11 @@ export function EditProviderDialog({
                                 }
                                 disabled={isLoading}
                             />
-                            <span>Use for transcription</span>
+                            <span>
+                                {isZh
+                                    ? "默认用于语音转写"
+                                    : "Use for transcription"}
+                            </span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -309,7 +378,11 @@ export function EditProviderDialog({
                                 }
                                 disabled={isLoading}
                             />
-                            <span>Use for AI enhancements</span>
+                            <span>
+                                {isZh
+                                    ? "默认用于大纲总结"
+                                    : "Use for AI enhancements"}
+                            </span>
                         </label>
                     </Panel>
 
@@ -320,14 +393,20 @@ export function EditProviderDialog({
                             disabled={isLoading}
                             className="flex-1"
                         >
-                            Cancel
+                            {isZh ? "取消" : "Cancel"}
                         </MetalButton>
                         <MetalButton
                             type="submit"
                             disabled={isLoading}
                             className="flex-1"
                         >
-                            {isLoading ? "Updating..." : "Update Provider"}
+                            {isLoading
+                                ? isZh
+                                    ? "正在更新..."
+                                    : "Updating..."
+                                : isZh
+                                  ? "更新服务商"
+                                  : "Update Provider"}
                         </MetalButton>
                     </div>
                 </form>

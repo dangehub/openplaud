@@ -9,9 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSettings } from "@/hooks/use-settings";
+import { useTranslation } from "@/lib/i18n";
 import { requestNotificationPermission } from "@/lib/notifications/browser";
 
 export function NotificationsSection() {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const {
         isLoadingSettings,
         isSavingSettings,
@@ -112,7 +116,9 @@ export function NotificationsSection() {
         if (!emailToTest) {
             setTestEmailStatus({
                 type: "error",
-                message: "Please enter an email address first",
+                message: isZh
+                    ? "请先输入邮件地址"
+                    : "Please enter an email address first",
             });
             return;
         }
@@ -134,19 +140,27 @@ export function NotificationsSection() {
             if (response.ok) {
                 setTestEmailStatus({
                     type: "success",
-                    message: `Test email sent successfully to ${emailToTest}`,
+                    message: isZh
+                        ? `测试邮件已成功发送至 ${emailToTest}`
+                        : `Test email sent successfully to ${emailToTest}`,
                 });
             } else {
                 setTestEmailStatus({
                     type: "error",
-                    message: data.error || "Failed to send test email",
+                    message:
+                        data.error ||
+                        (isZh
+                            ? "测试邮件发送失败"
+                            : "Failed to send test email"),
                 });
             }
         } catch (err) {
             console.error("Error sending test email:", err);
             setTestEmailStatus({
                 type: "error",
-                message: "Failed to send test email. Please try again.",
+                message: isZh
+                    ? "测试邮件发送失败，请稍后重试。"
+                    : "Failed to send test email. Please try again.",
             });
         } finally {
             setIsSendingTestEmail(false);
@@ -164,8 +178,12 @@ export function NotificationsSection() {
     return (
         <div className="space-y-6">
             <SettingsSectionHeader
-                title="Notifications"
-                description="Choose how and when Riffado lets you know about new recordings and sync events."
+                title={isZh ? "消息推送与通知" : "Notifications"}
+                description={
+                    isZh
+                        ? "选择 Riffado 何时以及通过何种方式向您推送新录音及同步结果的通知。"
+                        : "Choose how and when Riffado lets you know about new recordings and sync events."
+                }
                 icon={Bell}
             />
 
@@ -180,10 +198,16 @@ export function NotificationsSection() {
                                     className="size-4 text-muted-foreground"
                                     aria-hidden="true"
                                 />
-                                Browser notifications
+                                {isZh
+                                    ? "浏览器推送通知"
+                                    : "Browser notifications"}
                             </span>
                         }
-                        description="Show browser notifications for new recordings and sync events."
+                        description={
+                            isZh
+                                ? "当有新录音或同步完成时，在浏览器中展示弹窗通知。"
+                                : "Show browser notifications for new recordings and sync events."
+                        }
                         checked={browserNotifications}
                         onCheckedChange={handleBrowserNotificationsChange}
                         disabled={isSavingSettings}
@@ -200,10 +224,14 @@ export function NotificationsSection() {
                                     className="size-4 text-muted-foreground"
                                     aria-hidden="true"
                                 />
-                                Email notifications
+                                {isZh ? "电子邮件通知" : "Email notifications"}
                             </span>
                         }
-                        description="Send email notifications for new recordings."
+                        description={
+                            isZh
+                                ? "有新录音同步完成后，向您的邮箱发送邮件通知。"
+                                : "Send email notifications for new recordings."
+                        }
                         checked={emailNotifications}
                         onCheckedChange={handleEmailNotificationsChange}
                         disabled={isSavingSettings}
@@ -212,7 +240,7 @@ export function NotificationsSection() {
                     {emailNotifications && (
                         <div className="mt-3 space-y-2 border-t pt-3">
                             <Label htmlFor="notification-email">
-                                Email address
+                                {isZh ? "邮箱地址" : "Email address"}
                             </Label>
                             <Input
                                 id="notification-email"
@@ -227,8 +255,12 @@ export function NotificationsSection() {
                             />
                             <p className="text-xs text-muted-foreground">
                                 {userEmail && notificationEmail === userEmail
-                                    ? "Using your account email. You can change this to a different address if needed."
-                                    : "Email address to receive notifications."}
+                                    ? isZh
+                                        ? "正在使用您账号的注册邮箱。如果需要，您可以将其更改为其他地址。"
+                                        : "Using your account email. You can change this to a different address if needed."
+                                    : isZh
+                                      ? "接收通知提醒的电子邮箱地址。"
+                                      : "Email address to receive notifications."}
                             </p>
                             <div className="flex items-center gap-2 pt-1">
                                 <Button
@@ -243,8 +275,12 @@ export function NotificationsSection() {
                                 >
                                     <Mail className="size-4" />
                                     {isSendingTestEmail
-                                        ? "Sending…"
-                                        : "Send test email"}
+                                        ? isZh
+                                            ? "正在发送..."
+                                            : "Sending…"
+                                        : isZh
+                                          ? "发送测试邮件"
+                                          : "Send test email"}
                                 </Button>
                                 {testEmailStatus.type && (
                                     <p
@@ -272,10 +308,16 @@ export function NotificationsSection() {
                                     className="size-4 text-muted-foreground"
                                     aria-hidden="true"
                                 />
-                                Bark push notifications
+                                {isZh
+                                    ? "Bark 苹果设备推送"
+                                    : "Bark push notifications"}
                             </span>
                         }
-                        description="Send push notifications via Bark for new recordings."
+                        description={
+                            isZh
+                                ? "有新录音同步完成后，通过 Bark 软件向您的 iOS 设备发送推送。"
+                                : "Send push notifications via Bark for new recordings."
+                        }
                         checked={barkNotifications}
                         onCheckedChange={handleBarkNotificationsChange}
                         disabled={isSavingSettings}
@@ -283,7 +325,11 @@ export function NotificationsSection() {
 
                     {barkNotifications && (
                         <div className="mt-3 space-y-2 border-t pt-3">
-                            <Label htmlFor="bark-push-url">Bark push URL</Label>
+                            <Label htmlFor="bark-push-url">
+                                {isZh
+                                    ? "Bark 推送接口地址 (Push URL)"
+                                    : "Bark push URL"}
+                            </Label>
                             <Input
                                 id="bark-push-url"
                                 type="url"
@@ -294,8 +340,9 @@ export function NotificationsSection() {
                                 placeholder="https://api.day.app/your_key"
                             />
                             <p className="text-xs text-muted-foreground">
-                                Copy the full push URL from the Bark app (e.g.,
-                                https://api.day.app/your_key).
+                                {isZh
+                                    ? "复制 Bark 客户端中的完整推送 URL 地址 (例如：https://api.day.app/your_key)。"
+                                    : "Copy the full push URL from the Bark app (e.g., https://api.day.app/your_key)."}
                             </p>
                         </div>
                     )}
@@ -311,10 +358,14 @@ export function NotificationsSection() {
                                     className="size-4 text-muted-foreground"
                                     aria-hidden="true"
                                 />
-                                Notification sound
+                                {isZh ? "声音提醒开关" : "Notification sound"}
                             </span>
                         }
-                        description="Play a sound when notifications are received."
+                        description={
+                            isZh
+                                ? "收到任何系统通知时自动播放声音提示。"
+                                : "Play a sound when notifications are received."
+                        }
                         checked={notificationSound}
                         onCheckedChange={(checked) => {
                             setNotificationSound(checked);

@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getApiErrorMessage } from "@/lib/api-errors";
+import { useTranslation } from "@/lib/i18n";
 
 type ApiKey = {
     id: string;
@@ -27,12 +28,23 @@ type ApiKey = {
     createdAt: string;
 };
 
-function formatDate(value: string | null): string {
-    if (!value) return "Never";
-    return new Date(value).toLocaleString();
+function formatDate(
+    value: string | null,
+    isZh: boolean,
+    type?: "used" | "expires" | "created",
+): string {
+    if (!value) {
+        if (type === "used") return isZh ? "从未使用" : "Never";
+        if (type === "expires") return isZh ? "永不过期" : "Never";
+        return isZh ? "无" : "Never";
+    }
+    return new Date(value).toLocaleString(isZh ? "zh-CN" : undefined);
 }
 
 export function ApiKeysSection() {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
@@ -48,18 +60,18 @@ export function ApiKeysSection() {
                 throw new Error(
                     await getApiErrorMessage(
                         response,
-                        "Failed to fetch API keys",
+                        isZh ? "获取 API 密钥失败" : "Failed to fetch API keys",
                     ),
                 );
             }
             const data = (await response.json()) as { apiKeys: ApiKey[] };
             setApiKeys(data.apiKeys);
         } catch {
-            toast.error("Failed to load API keys");
+            toast.error(isZh ? "加载 API 密钥失败" : "Failed to load API keys");
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [isZh]);
 
     useEffect(() => {
         refreshApiKeys();
@@ -86,7 +98,7 @@ export function ApiKeysSection() {
                 throw new Error(
                     await getApiErrorMessage(
                         response,
-                        "Failed to create API key",
+                        isZh ? "创建 API 密钥失败" : "Failed to create API key",
                     ),
                 );
             }
@@ -96,7 +108,12 @@ export function ApiKeysSection() {
                 error?: string;
             };
             if (!data.key || !data.apiKey) {
-                throw new Error(data.error || "Failed to create API key");
+                throw new Error(
+                    data.error ||
+                        (isZh
+                            ? "创建 API 密钥失败"
+                            : "Failed to create API key"),
+                );
             }
 
             setApiKeys((current) => [data.apiKey as ApiKey, ...current]);
@@ -107,7 +124,9 @@ export function ApiKeysSection() {
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to create API key",
+                    : isZh
+                      ? "创建 API 密钥失败"
+                      : "Failed to create API key",
             );
         } finally {
             setIsCreating(false);
@@ -123,17 +142,19 @@ export function ApiKeysSection() {
                 throw new Error(
                     await getApiErrorMessage(
                         response,
-                        "Failed to revoke API key",
+                        isZh ? "注销 API 密钥失败" : "Failed to revoke API key",
                     ),
                 );
             }
-            toast.success("API key revoked");
+            toast.success(isZh ? "API 密钥已注销" : "API key revoked");
             await refreshApiKeys();
         } catch (error) {
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to revoke API key",
+                    : isZh
+                      ? "注销 API 密钥失败"
+                      : "Failed to revoke API key",
             );
         }
     };
@@ -141,14 +162,18 @@ export function ApiKeysSection() {
     const copyCreatedKey = async () => {
         if (!createdKey) return;
         await navigator.clipboard.writeText(createdKey);
-        toast.success("API key copied");
+        toast.success(isZh ? "API 密钥已复制" : "API key copied");
     };
 
     return (
         <div className="space-y-6">
             <SettingsSectionHeader
-                title="API Keys"
-                description="Personal access tokens for the Riffado public API."
+                title={isZh ? "API 密钥" : "API Keys"}
+                description={
+                    isZh
+                        ? "用于访问 Riffado 公共 API 的个人访问令牌。"
+                        : "Personal access tokens for the Riffado public API."
+                }
                 icon={KeyRound}
                 action={
                     <Button
@@ -159,7 +184,7 @@ export function ApiKeysSection() {
                         }}
                     >
                         <Plus className="size-4" />
-                        Create Key
+                        {isZh ? "创建密钥" : "Create Key"}
                     </Button>
                 }
             />
@@ -171,10 +196,12 @@ export function ApiKeysSection() {
             ) : apiKeys.length === 0 ? (
                 <div className="text-center py-12 border rounded-lg">
                     <KeyRound className="size-12 mx-auto mb-3 text-muted-foreground" />
-                    <h3 className="font-semibold mb-2">No API keys</h3>
+                    <h3 className="font-semibold mb-2">
+                        {isZh ? "无 API 密钥" : "No API keys"}
+                    </h3>
                     <Button size="sm" onClick={() => setIsCreateOpen(true)}>
                         <Plus className="size-4" />
-                        Create Key
+                        {isZh ? "创建密钥" : "Create Key"}
                     </Button>
                 </div>
             ) : (
@@ -194,20 +221,34 @@ export function ApiKeysSection() {
                                     </span>
                                     {apiKey.revokedAt && (
                                         <span className="rounded border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs text-destructive">
-                                            Revoked
+                                            {isZh ? "已注销" : "Revoked"}
                                         </span>
                                     )}
                                 </div>
                                 <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-3">
                                     <span>
-                                        Last used:{" "}
-                                        {formatDate(apiKey.lastUsedAt)}
+                                        {isZh ? "上次使用：" : "Last used: "}{" "}
+                                        {formatDate(
+                                            apiKey.lastUsedAt,
+                                            isZh,
+                                            "used",
+                                        )}
                                     </span>
                                     <span>
-                                        Expires: {formatDate(apiKey.expiresAt)}
+                                        {isZh ? "过期时间：" : "Expires: "}{" "}
+                                        {formatDate(
+                                            apiKey.expiresAt,
+                                            isZh,
+                                            "expires",
+                                        )}
                                     </span>
                                     <span>
-                                        Created: {formatDate(apiKey.createdAt)}
+                                        {isZh ? "创建时间：" : "Created: "}{" "}
+                                        {formatDate(
+                                            apiKey.createdAt,
+                                            isZh,
+                                            "created",
+                                        )}
                                     </span>
                                 </div>
                             </div>
@@ -216,7 +257,11 @@ export function ApiKeysSection() {
                                 size="icon"
                                 onClick={() => handleRevoke(apiKey.id)}
                                 disabled={Boolean(apiKey.revokedAt)}
-                                aria-label={`Revoke ${apiKey.name}`}
+                                aria-label={
+                                    isZh
+                                        ? `注销 ${apiKey.name}`
+                                        : `Revoke ${apiKey.name}`
+                                }
                             >
                                 <Trash2 className="size-4 text-destructive" />
                             </Button>
@@ -227,11 +272,15 @@ export function ApiKeysSection() {
 
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                 <DialogContent className="max-w-md">
-                    <DialogTitle>Create API Key</DialogTitle>
+                    <DialogTitle>
+                        {isZh ? "创建 API 密钥" : "Create API Key"}
+                    </DialogTitle>
                     {createdKey ? (
                         <div className="space-y-4">
                             <DialogDescription>
-                                This key is shown once.
+                                {isZh
+                                    ? "该密钥只显示一次，请妥善保存。"
+                                    : "This key is shown once."}
                             </DialogDescription>
                             <div className="rounded-md border bg-muted p-3 font-mono text-sm break-all">
                                 {createdKey}
@@ -244,7 +293,7 @@ export function ApiKeysSection() {
                                     onClick={copyCreatedKey}
                                 >
                                     <Clipboard className="size-4" />
-                                    Copy
+                                    {isZh ? "复制" : "Copy"}
                                 </Button>
                                 <Button
                                     type="button"
@@ -255,27 +304,31 @@ export function ApiKeysSection() {
                                     }}
                                 >
                                     <Check className="size-4" />
-                                    Saved
+                                    {isZh ? "已保存" : "Saved"}
                                 </Button>
                             </div>
                         </div>
                     ) : (
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="api-key-name">Name</Label>
+                                <Label htmlFor="api-key-name">
+                                    {isZh ? "名称" : "Name"}
+                                </Label>
                                 <Input
                                     id="api-key-name"
                                     value={name}
                                     onChange={(event) =>
                                         setName(event.target.value)
                                     }
-                                    placeholder="Hermes Agent"
+                                    placeholder={
+                                        isZh ? "Hermes 代理" : "Hermes Agent"
+                                    }
                                     disabled={isCreating}
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="api-key-expires">
-                                    Expiration
+                                    {isZh ? "过期时间" : "Expiration"}
                                 </Label>
                                 <Input
                                     id="api-key-expires"
@@ -294,13 +347,13 @@ export function ApiKeysSection() {
                                     onClick={() => setIsCreateOpen(false)}
                                     disabled={isCreating}
                                 >
-                                    Cancel
+                                    {isZh ? "取消" : "Cancel"}
                                 </Button>
                                 <Button
                                     type="submit"
                                     disabled={!name.trim() || isCreating}
                                 >
-                                    Create
+                                    {isZh ? "创建" : "Create"}
                                 </Button>
                             </div>
                         </form>

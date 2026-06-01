@@ -37,7 +37,10 @@ export const DEFAULT_WEBHOOK_EVENTS = [
     "transcription.failed",
 ];
 
-export function formatWebhookDate(value: string | null): string {
-    if (!value) return "Never";
-    return new Date(value).toLocaleString();
+export function formatWebhookDate(
+    value: string | null,
+    isZh?: boolean,
+): string {
+    if (!value) return isZh ? "从不" : "Never";
+    return new Date(value).toLocaleString(isZh ? "zh-CN" : undefined);
 }

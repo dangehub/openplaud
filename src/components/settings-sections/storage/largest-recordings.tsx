@@ -5,6 +5,8 @@ import { BREAKDOWN_COLORS } from "@/components/settings-sections/storage/breakdo
 import { formatBytes } from "@/lib/format-bytes";
 import { formatDurationMs } from "@/lib/format-duration";
 
+import { useTranslation } from "@/lib/i18n";
+
 interface LargestRecordingsProps {
     items: {
         id: string;
@@ -23,14 +25,21 @@ interface LargestRecordingsProps {
  * cleanup small and reversible (preview before delete).
  */
 export function LargestRecordings({ items }: LargestRecordingsProps) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     if (items.length === 0) return null;
 
     return (
         <div className="rounded-lg border bg-card">
             <div className="px-4 pt-3 pb-2">
-                <div className="text-sm font-medium">Largest recordings</div>
+                <div className="text-sm font-medium">
+                    {isZh ? "占用空间最大的录音" : "Largest recordings"}
+                </div>
                 <div className="text-xs text-muted-foreground">
-                    Open a recording to preview it before deleting
+                    {isZh
+                        ? "点击录音可在删除前进行预览"
+                        : "Open a recording to preview it before deleting"}
                 </div>
             </div>
             <ul className="divide-y">

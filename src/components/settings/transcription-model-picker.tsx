@@ -27,6 +27,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import type { ProviderPreset } from "@/lib/ai/provider-presets";
+import { useTranslation } from "@/lib/i18n";
 
 interface ModelOption {
     id: string;
@@ -52,6 +53,9 @@ export function TranscriptionModelPicker({
     onChange,
     disabled,
 }: Props) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     // Live fetch for `fetchAudioModels: true` presets.
     const [audioModels, setAudioModels] = useState<ModelOption[]>([]);
     const [audioModelsLoading, setAudioModelsLoading] = useState(false);
@@ -97,14 +101,19 @@ export function TranscriptionModelPicker({
                 if (!res.ok) {
                     setAudioModels([]);
                     setAudioModelsError(
-                        data?.error || "Couldn't load audio models.",
+                        data?.error ||
+                            (isZh
+                                ? "无法加载音频模型。"
+                                : "Couldn't load audio models."),
                     );
                     return;
                 }
                 setAudioModels(data?.models ?? []);
             } catch {
                 if (reqId !== requestId.current) return;
-                setAudioModelsError("Couldn't load audio models.");
+                setAudioModelsError(
+                    isZh ? "无法加载音频模型。" : "Couldn't load audio models.",
+                );
             } finally {
                 if (reqId === requestId.current) {
                     setAudioModelsLoading(false);
@@ -112,7 +121,7 @@ export function TranscriptionModelPicker({
             }
         }, 400);
         return () => clearTimeout(timer);
-    }, [shouldFetch, providerName, apiKey, baseUrl]);
+    }, [shouldFetch, providerName, apiKey, baseUrl, isZh]);
 
     // Resolve which option list (if any) we should render.
     const options: ModelOption[] = preset?.fetchAudioModels
@@ -164,23 +173,31 @@ export function TranscriptionModelPicker({
     let helper: string | null = null;
     if (preset?.fetchAudioModels) {
         if (audioModelsLoading) {
-            helper = "Loading audio-capable models…";
+            helper = isZh
+                ? "正在加载音频模型..."
+                : "Loading audio-capable models…";
         } else if (audioModelsError) {
             helper = audioModelsError;
         } else if (hasOptions) {
-            helper =
-                "Only audio-input models are shown. Transcription uses chat-completions; mp3/wav recordings only.";
+            helper = isZh
+                ? "仅显示支持音频输入的模型。转录使用 chat-completions，仅支持 mp3/wav 录音。"
+                : "Only audio-input models are shown. Transcription uses chat-completions; mp3/wav recordings only.";
         } else {
-            helper = "Enter your API key to load audio-capable models.";
+            helper = isZh
+                ? "请输入 API 密钥以加载支持音频输入的模型。"
+                : "Enter your API key to load audio-capable models.";
         }
     } else if (preset?.knownTranscriptionModels?.length) {
-        helper =
-            "Pick a transcription model. Choose Custom… to type a model id we haven't shipped yet.";
+        helper = isZh
+            ? "请选择一个转写模型。选择“自定义”以手动输入未在列表中的模型 ID。"
+            : "Pick a transcription model. Choose Custom… to type a model id we haven't shipped yet.";
     }
 
     return (
         <div className="space-y-2">
-            <Label htmlFor="defaultModel">Default Model</Label>
+            <Label htmlFor="defaultModel">
+                {isZh ? "默认模型" : "Default Model"}
+            </Label>
             {hasOptions && !useCustom ? (
                 <Select
                     value={value || undefined}
@@ -188,7 +205,13 @@ export function TranscriptionModelPicker({
                     disabled={disabled}
                 >
                     <SelectTrigger>
-                        <SelectValue placeholder="Pick a transcription model" />
+                        <SelectValue
+                            placeholder={
+                                isZh
+                                    ? "选择转写模型"
+                                    : "Pick a transcription model"
+                            }
+                        />
                     </SelectTrigger>
                     <SelectContent>
                         {options.map((m) => (
@@ -197,7 +220,9 @@ export function TranscriptionModelPicker({
                             </SelectItem>
                         ))}
                         <SelectItem value={CUSTOM_SENTINEL}>
-                            Custom (type model name)…
+                            {isZh
+                                ? "自定义 (手动输入模型名称)…"
+                                : "Custom (type model name)…"}
                         </SelectItem>
                     </SelectContent>
                 </Select>
@@ -221,7 +246,7 @@ export function TranscriptionModelPicker({
                         onChange(options[0]?.id ?? "");
                     }}
                 >
-                    Back to suggested models
+                    {isZh ? "返回推荐模型列表" : "Back to suggested models"}
                 </button>
             )}
             {helper && (

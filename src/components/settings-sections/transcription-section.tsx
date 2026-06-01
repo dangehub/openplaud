@@ -14,40 +14,50 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
-
-const languageOptions = [
-    { label: "Auto-detect", value: null },
-    { label: "English", value: "en" },
-    { label: "Spanish", value: "es" },
-    { label: "French", value: "fr" },
-    { label: "German", value: "de" },
-    { label: "Italian", value: "it" },
-    { label: "Portuguese", value: "pt" },
-    { label: "Chinese", value: "zh" },
-    { label: "Japanese", value: "ja" },
-    { label: "Korean", value: "ko" },
-    { label: "Russian", value: "ru" },
-];
-
-const qualityOptions = [
-    {
-        label: "Fast",
-        value: "fast",
-        description: "Faster transcription, lower accuracy",
-    },
-    {
-        label: "Balanced",
-        value: "balanced",
-        description: "Good balance of speed and accuracy",
-    },
-    {
-        label: "Accurate",
-        value: "accurate",
-        description: "Highest accuracy, slower transcription",
-    },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export function TranscriptionSection() {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
+    const languageOptions = [
+        { label: isZh ? "自动检测" : "Auto-detect", value: null },
+        { label: isZh ? "英语" : "English", value: "en" },
+        { label: isZh ? "西班牙语" : "Spanish", value: "es" },
+        { label: isZh ? "法语" : "French", value: "fr" },
+        { label: isZh ? "德语" : "German", value: "de" },
+        { label: isZh ? "意大利语" : "Italian", value: "it" },
+        { label: isZh ? "葡萄牙语" : "Portuguese", value: "pt" },
+        { label: isZh ? "中文" : "Chinese", value: "zh" },
+        { label: isZh ? "日语" : "Japanese", value: "ja" },
+        { label: isZh ? "韩语" : "Korean", value: "ko" },
+        { label: isZh ? "俄语" : "Russian", value: "ru" },
+    ];
+
+    const qualityOptions = [
+        {
+            label: isZh ? "极速" : "Fast",
+            value: "fast",
+            description: isZh
+                ? "转写速度更快，但准确率可能较低"
+                : "Faster transcription, lower accuracy",
+        },
+        {
+            label: isZh ? "平衡" : "Balanced",
+            value: "balanced",
+            description: isZh
+                ? "速度与准确率之间的良好平衡"
+                : "Good balance of speed and accuracy",
+        },
+        {
+            label: isZh ? "高精" : "Accurate",
+            value: "accurate",
+            description: isZh
+                ? "转写准确率最高，但速度较慢"
+                : "Highest accuracy, slower transcription",
+        },
+    ];
+
     const { isLoadingSettings, isSavingSettings, setIsLoadingSettings } =
         useSettings();
     const [autoTranscribe, setAutoTranscribe] = useState(false);
@@ -220,19 +230,26 @@ export function TranscriptionSection() {
     return (
         <div className="space-y-6">
             <SettingsSectionHeader
-                title="Transcription"
-                description="Defaults and provider selection for converting audio to text."
+                title={isZh ? "语音转写" : "Transcription"}
+                description={
+                    isZh
+                        ? "设置音频文件转换为文本的默认语言与服务质量。"
+                        : "Defaults and provider selection for converting audio to text."
+                }
                 icon={FileText}
             />
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="space-y-0.5 flex-1">
                         <Label htmlFor="auto-transcribe" className="text-base">
-                            Auto-transcribe new recordings
+                            {isZh
+                                ? "自动转写新录音"
+                                : "Auto-transcribe new recordings"}
                         </Label>
                         <p className="text-sm text-muted-foreground">
-                            Automatically transcribe recordings when they are
-                            synced from your Plaud device
+                            {isZh
+                                ? "当从您的录音设备中同步新录音时，自动在后台进行语音转录"
+                                : "Automatically transcribe recordings when they are synced from your Plaud device"}
                         </p>
                     </div>
                     <Switch
@@ -245,7 +262,9 @@ export function TranscriptionSection() {
 
                 <div className="space-y-2">
                     <Label htmlFor="transcription-language">
-                        Default transcription language
+                        {isZh
+                            ? "默认转写语言"
+                            : "Default transcription language"}
                     </Label>
                     <Select
                         value={defaultTranscriptionLanguage || "auto"}
@@ -267,7 +286,7 @@ export function TranscriptionSection() {
                                     (opt) =>
                                         opt.value ===
                                         defaultTranscriptionLanguage,
-                                )?.label || "Auto-detect"}
+                                )?.label || (isZh ? "自动检测" : "Auto-detect")}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -282,14 +301,15 @@ export function TranscriptionSection() {
                         </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                        Language to use for transcription. Auto-detect will
-                        identify the language automatically.
+                        {isZh
+                            ? "语音转录时所使用的语言。选择“自动检测”将自动识别音频中的主要语种。"
+                            : "Language to use for transcription. Auto-detect will identify the language automatically."}
                     </p>
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="transcription-quality">
-                        Transcription quality
+                        {isZh ? "转写质量偏好" : "Transcription quality"}
                     </Label>
                     <Select
                         value={transcriptionQuality}
@@ -308,7 +328,7 @@ export function TranscriptionSection() {
                             <SelectValue>
                                 {qualityOptions.find(
                                     (opt) => opt.value === transcriptionQuality,
-                                )?.label || "Balanced"}
+                                )?.label || (isZh ? "平衡" : "Balanced")}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -328,7 +348,9 @@ export function TranscriptionSection() {
                         </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                        Balance between transcription speed and accuracy
+                        {isZh
+                            ? "在语音转录的速度和文字识别的准确率之间进行权衡的优先等级"
+                            : "Balance between transcription speed and accuracy"}
                     </p>
                 </div>
 
@@ -338,11 +360,12 @@ export function TranscriptionSection() {
                             htmlFor="auto-generate-title"
                             className="text-base"
                         >
-                            Auto-generate titles
+                            {isZh ? "自动生成录音标题" : "Auto-generate titles"}
                         </Label>
                         <p className="text-sm text-muted-foreground">
-                            Automatically generate descriptive titles from
-                            transcriptions using AI
+                            {isZh
+                                ? "转写完成后，自动使用 AI 基于转录的文本内容智能提取并生成描述性录音标题"
+                                : "Automatically generate descriptive titles from transcriptions using AI"}
                         </p>
                     </div>
                     <Switch
@@ -365,11 +388,14 @@ export function TranscriptionSection() {
                                 htmlFor="sync-title-plaud"
                                 className="text-base"
                             >
-                                Sync titles to Plaud
+                                {isZh
+                                    ? "同步标题到 Plaud 设备"
+                                    : "Sync titles to Plaud"}
                             </Label>
                             <p className="text-sm text-muted-foreground">
-                                Update the filename in your Plaud device when
-                                titles are generated
+                                {isZh
+                                    ? "当 AI 成功生成新标题时，同步更新录音笔 App 中的云端录音文件名"
+                                    : "Update the filename in your Plaud device when titles are generated"}
                             </p>
                         </div>
                         <Switch

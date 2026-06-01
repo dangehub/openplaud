@@ -4,6 +4,7 @@ import { CheckCircle2, Loader2, RefreshCw, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 interface PlaudInfo {
     connected: boolean;
@@ -26,6 +27,9 @@ interface PlaudInfo {
 }
 
 export function DevSection() {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const [plaudInfo, setPlaudInfo] = useState<PlaudInfo | null>(null);
     const [isLoadingPlaud, setIsLoadingPlaud] = useState(false);
 
@@ -40,15 +44,31 @@ export function DevSection() {
             const data = (await res.json()) as PlaudInfo;
             setPlaudInfo(data);
             if (data.connected && data.reachable) {
-                toast.success(`Plaud reachable (${data.latencyMs}ms)`);
+                toast.success(
+                    isZh
+                        ? `已连接 Plaud 接口 (延迟 ${data.latencyMs}ms)`
+                        : `Plaud reachable (${data.latencyMs}ms)`,
+                );
             } else if (data.connected && !data.reachable) {
-                toast.error(`Plaud unreachable: ${data.error ?? "unknown"}`);
+                toast.error(
+                    isZh
+                        ? `无法连接 Plaud 接口: ${data.error ?? "未知错误"}`
+                        : `Plaud unreachable: ${data.error ?? "unknown"}`,
+                );
             } else {
-                toast.message("No Plaud connection stored");
+                toast.message(
+                    isZh
+                        ? "未检测到已存储的 Plaud 账号连接"
+                        : "No Plaud connection stored",
+                );
             }
         } catch (error) {
             toast.error(
-                error instanceof Error ? error.message : "Request failed",
+                error instanceof Error
+                    ? error.message
+                    : isZh
+                      ? "请求失败"
+                      : "Request failed",
             );
         } finally {
             setIsLoadingPlaud(false);
@@ -59,20 +79,25 @@ export function DevSection() {
         <div className="space-y-6">
             <div>
                 <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">
-                    Developer Tools
+                    {isZh ? "开发者调试工具" : "Developer Tools"}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                    Dev-only diagnostics. Not visible in production builds.
+                    {isZh
+                        ? "仅在开发环境下可见的系统诊断工具，生产环境构建包将自动隐藏此菜单。"
+                        : "Dev-only diagnostics. Not visible in production builds."}
                 </p>
             </div>
 
             <section className="space-y-3 rounded-lg border p-4">
                 <div className="flex items-center justify-between gap-2">
                     <div>
-                        <h4 className="font-medium">Plaud connection</h4>
+                        <h4 className="font-medium">
+                            {isZh ? "Plaud 账号连接探测" : "Plaud connection"}
+                        </h4>
                         <p className="text-sm text-muted-foreground">
-                            Probe the stored bearer token against the stored API
-                            base and report counts.
+                            {isZh
+                                ? "对当前已存储的 Plaud 令牌 (Bearer Token) 及接口进行请求测试，并反馈统计结果。"
+                                : "Probe the stored bearer token against the stored API base and report counts."}
                         </p>
                     </div>
                     <Button
@@ -86,7 +111,9 @@ export function DevSection() {
                         ) : (
                             <RefreshCw className="size-4" />
                         )}
-                        <span className="ml-2">Probe</span>
+                        <span className="ml-2">
+                            {isZh ? "开始探测" : "Probe"}
+                        </span>
                     </Button>
                 </div>
 
@@ -94,7 +121,9 @@ export function DevSection() {
                     <div className="space-y-2 text-sm">
                         {!plaudInfo.connected ? (
                             <p className="text-muted-foreground">
-                                No connection stored for this user.
+                                {isZh
+                                    ? "当前用户未绑定任何 Plaud 账号。"
+                                    : "No connection stored for this user."}
                             </p>
                         ) : (
                             <>
@@ -106,50 +135,54 @@ export function DevSection() {
                                     )}
                                     <span>
                                         {plaudInfo.reachable
-                                            ? `Reachable in ${plaudInfo.latencyMs}ms`
-                                            : `Unreachable: ${plaudInfo.error ?? "unknown"}`}
+                                            ? isZh
+                                                ? `网络延迟 ${plaudInfo.latencyMs}ms`
+                                                : `Reachable in ${plaudInfo.latencyMs}ms`
+                                            : isZh
+                                              ? `无法连通: ${plaudInfo.error ?? "未知错误"}`
+                                              : `Unreachable: ${plaudInfo.error ?? "unknown"}`}
                                     </span>
                                 </div>
                                 <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 font-mono text-xs">
                                     <dt className="text-muted-foreground">
-                                        server
+                                        server (服务器)
                                     </dt>
                                     <dd>{plaudInfo.connection?.server}</dd>
                                     <dt className="text-muted-foreground">
-                                        apiBase
+                                        apiBase (接口地址)
                                     </dt>
                                     <dd className="break-all">
                                         {plaudInfo.connection?.apiBase}
                                     </dd>
                                     <dt className="text-muted-foreground">
-                                        email
+                                        email (注册邮箱)
                                     </dt>
                                     <dd>
                                         {plaudInfo.connection?.plaudEmail ??
                                             "—"}
                                     </dd>
                                     <dt className="text-muted-foreground">
-                                        devices
+                                        devices (已绑定设备数)
                                     </dt>
                                     <dd>
                                         {plaudInfo.stats?.deviceCount ?? "—"}
                                     </dd>
                                     <dt className="text-muted-foreground">
-                                        recordings (active)
+                                        recordings (active - 活动录音)
                                     </dt>
                                     <dd>
                                         {plaudInfo.stats
                                             ?.activeRecordingCount ?? "—"}
                                     </dd>
                                     <dt className="text-muted-foreground">
-                                        recordings (trash)
+                                        recordings (trash - 回收站录音)
                                     </dt>
                                     <dd>
                                         {plaudInfo.stats
                                             ?.trashedRecordingCount ?? "—"}
                                     </dd>
                                     <dt className="text-muted-foreground">
-                                        updatedAt
+                                        updatedAt (更新时间)
                                     </dt>
                                     <dd>{plaudInfo.connection?.updatedAt}</dd>
                                 </dl>

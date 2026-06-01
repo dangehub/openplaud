@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { formatBytes } from "@/lib/format-bytes";
 import { formatHoursCompact } from "@/lib/format-duration";
+import { useTranslation } from "@/lib/i18n";
 
 interface UsageHeroProps {
     usedBytes: number;
@@ -18,21 +19,6 @@ interface UsageHeroProps {
     quotaBytes: number | null;
 }
 
-/**
- * Top-of-section usage summary.
- *
- * Two layouts driven by data, not props:
- * - With a meaningful denominator (local disk free, or a future
- *   account quota) we render a radial progress ring wrapping the big
- *   "Used" number. The ring merges the absolute and relative answers
- *   into one focal element — no separate progress bar needed.
- * - Without a denominator (S3, hosted-with-no-quota), the ring is
- *   omitted; just number + sub-line. Drawing a fake/empty ring would
- *   imply a limit that doesn't exist.
- *
- * Mode differences (hosted vs self-host) are decided server-side by
- * what's populated; no copy here hints at plans, tiers, or upgrades.
- */
 export function UsageHero({
     usedBytes,
     recordingCount,
@@ -40,6 +26,9 @@ export function UsageHero({
     diskFreeBytes,
     quotaBytes,
 }: UsageHeroProps) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const avgBytes =
         recordingCount > 0 ? Math.round(usedBytes / recordingCount) : 0;
 
@@ -52,13 +41,15 @@ export function UsageHero({
         capacity = {
             used: usedBytes,
             total: quotaBytes,
-            remainingLabel: `${formatBytes(Math.max(0, quotaBytes - usedBytes))} remaining`,
+            remainingLabel: `${formatBytes(Math.max(0, quotaBytes - usedBytes))} ${isZh ? "剩余" : "remaining"}`,
         };
     } else if (typeof diskFreeBytes === "number" && diskFreeBytes >= 0) {
         capacity = {
             used: usedBytes,
             total: usedBytes + diskFreeBytes,
-            remainingLabel: `${formatBytes(diskFreeBytes)} free on disk`,
+            remainingLabel: isZh
+                ? `磁盘可用空间 ${formatBytes(diskFreeBytes)}`
+                : `${formatBytes(diskFreeBytes)} free on disk`,
         };
     }
 
@@ -70,6 +61,7 @@ export function UsageHero({
                         used={capacity.used}
                         total={capacity.total}
                         usedBytes={usedBytes}
+                        isZh={isZh}
                     />
                 ) : (
                     <div className="text-4xl font-semibold tabular-nums">
@@ -78,21 +70,33 @@ export function UsageHero({
                 )}
                 <div className="min-w-0">
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Storage used
+                        {isZh ? "已用存储空间" : "Storage used"}
                     </div>
                     <div className="mt-1 text-sm text-muted-foreground">
-                        {recordingCount.toLocaleString()}{" "}
-                        {recordingCount === 1 ? "recording" : "recordings"}
+                        {isZh ? (
+                            <>共 {recordingCount.toLocaleString()} 条录音</>
+                        ) : (
+                            <>
+                                {recordingCount.toLocaleString()}{" "}
+                                {recordingCount === 1
+                                    ? "recording"
+                                    : "recordings"}
+                            </>
+                        )}
                         {totalDurationMs > 0 && (
                             <>
                                 {" · "}
-                                {formatHoursCompact(totalDurationMs)} total
+                                {isZh ? "总时长 " : ""}
+                                {formatHoursCompact(totalDurationMs)}
+                                {isZh ? "" : " total"}
                             </>
                         )}
                         {avgBytes > 0 && (
                             <>
                                 {" · "}
-                                {formatBytes(avgBytes)} avg
+                                {isZh ? "单条平均 " : ""}
+                                {formatBytes(avgBytes)}
+                                {isZh ? "" : " avg"}
                             </>
                         )}
                     </div>
@@ -116,18 +120,10 @@ interface CapacityRingProps {
      * the ring's center label in sync with the hero's main number.
      */
     usedBytes: number;
+    isZh: boolean;
 }
 
-/**
- * Inline-SVG radial progress ring. The big used-bytes value sits in
- * the middle; the ring sweep shows how much of `total` is consumed.
- *
- * Geometry note: we draw a single circle with a dasharray covering
- * the full circumference, then offset by `(1 - pct) * circumference`
- * to expose the filled arc. Starting at 12 o'clock (rotate -90deg)
- * matches the convention users expect from capacity meters.
- */
-function CapacityRing({ used, total, usedBytes }: CapacityRingProps) {
+function CapacityRing({ used, total, usedBytes, isZh }: CapacityRingProps) {
     const id = useId();
     const pct = Math.min(1, Math.max(0, total > 0 ? used / total : 0));
     const size = 132;
@@ -150,7 +146,9 @@ function CapacityRing({ used, total, usedBytes }: CapacityRingProps) {
                 aria-labelledby={`${id}-title`}
             >
                 <title id={`${id}-title`}>
-                    Storage capacity: {pctLabel} used
+                    {isZh
+                        ? `存储容量: 已使用 ${pctLabel}`
+                        : `Storage capacity: ${pctLabel} used`}
                 </title>
                 {/* Track */}
                 <circle
@@ -180,7 +178,7 @@ function CapacityRing({ used, total, usedBytes }: CapacityRingProps) {
                     {formatBytes(usedBytes)}
                 </div>
                 <div className="text-[11px] text-muted-foreground tabular-nums">
-                    {pctLabel} used
+                    {pctLabel} {isZh ? "已用" : "used"}
                 </div>
             </div>
         </div>

@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useTranslation } from "@/lib/i18n";
 import { DEFAULT_WEBHOOK_EVENTS, type WebhookEndpoint } from "./webhook-types";
 
 interface WebhookForm {
@@ -53,6 +54,24 @@ interface Props {
     onSaved: () => Promise<void> | void;
 }
 
+const getEventLabel = (event: string, isZh: boolean) => {
+    if (!isZh) return event;
+    switch (event) {
+        case "recording.synced":
+            return "录音已同步 (recording.synced)";
+        case "recording.updated":
+            return "录音已更新 (recording.updated)";
+        case "recording.deleted":
+            return "录音已删除 (recording.deleted)";
+        case "transcription.completed":
+            return "转录完成 (transcription.completed)";
+        case "transcription.failed":
+            return "转录失败 (transcription.failed)";
+        default:
+            return event;
+    }
+};
+
 /**
  * Create/edit dialog for a webhook endpoint. After a successful create, the
  * server returns a one-time signing secret which we show in-place (and ask
@@ -66,6 +85,9 @@ export function WebhookEditorDialog({
     events,
     onSaved,
 }: Props) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const [form, setForm] = useState<WebhookForm>(() =>
         buildForm(editingWebhook, events),
     );
@@ -114,7 +136,10 @@ export function WebhookEditorDialog({
                 error?: string;
             };
             if (!response.ok || !data.webhook) {
-                throw new Error(data.error || "Failed to save webhook");
+                throw new Error(
+                    data.error ||
+                        (isZh ? "保存 Webhook 失败" : "Failed to save webhook"),
+                );
             }
 
             await onSaved();
@@ -125,12 +150,22 @@ export function WebhookEditorDialog({
             } else {
                 onOpenChange(false);
             }
-            toast.success(editingWebhook ? "Webhook updated" : "Webhook added");
+            toast.success(
+                editingWebhook
+                    ? isZh
+                        ? "Webhook 已更新"
+                        : "Webhook updated"
+                    : isZh
+                      ? "Webhook 已添加"
+                      : "Webhook added",
+            );
         } catch (error) {
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to save webhook",
+                    : isZh
+                      ? "保存 Webhook 失败"
+                      : "Failed to save webhook",
             );
         } finally {
             setIsSaving(false);
@@ -140,19 +175,27 @@ export function WebhookEditorDialog({
     const copySecret = async () => {
         if (!createdSecret) return;
         await navigator.clipboard.writeText(createdSecret);
-        toast.success("Secret copied");
+        toast.success(isZh ? "签名密钥已复制" : "Secret copied");
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-xl">
                 <DialogTitle>
-                    {editingWebhook ? "Edit Webhook" : "Add Webhook"}
+                    {editingWebhook
+                        ? isZh
+                            ? "编辑 Webhook"
+                            : "Edit Webhook"
+                        : isZh
+                          ? "添加 Webhook"
+                          : "Add Webhook"}
                 </DialogTitle>
                 {createdSecret ? (
                     <div className="space-y-4">
                         <DialogDescription>
-                            This signing secret is shown once.
+                            {isZh
+                                ? "该签名密钥仅显示一次，请妥善保存。"
+                                : "This signing secret is shown once."}
                         </DialogDescription>
                         <div className="rounded-md border bg-muted p-3 font-mono text-sm break-all">
                             {createdSecret}
@@ -165,7 +208,7 @@ export function WebhookEditorDialog({
                                 onClick={copySecret}
                             >
                                 <Clipboard className="size-4" />
-                                Copy
+                                {isZh ? "复制" : "Copy"}
                             </Button>
                             <Button
                                 type="button"
@@ -176,7 +219,7 @@ export function WebhookEditorDialog({
                                 }}
                             >
                                 <Check className="size-4" />
-                                Saved
+                                {isZh ? "已保存" : "Saved"}
                             </Button>
                         </div>
                     </div>
@@ -199,7 +242,7 @@ export function WebhookEditorDialog({
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="webhook-description">
-                                Description
+                                {isZh ? "描述" : "Description"}
                             </Label>
                             <Input
                                 id="webhook-description"
@@ -210,12 +253,16 @@ export function WebhookEditorDialog({
                                         description: event.target.value,
                                     }))
                                 }
-                                placeholder="Automation receiver"
+                                placeholder={
+                                    isZh
+                                        ? "自动接收端点"
+                                        : "Automation receiver"
+                                }
                                 disabled={isSaving}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Events</Label>
+                            <Label>{isZh ? "触发事件" : "Events"}</Label>
                             <div className="grid gap-2 sm:grid-cols-2">
                                 {events.map((event) => (
                                     <label
@@ -234,13 +281,17 @@ export function WebhookEditorDialog({
                                                     form.events.includes(event))
                                             }
                                         />
-                                        <span>{event}</span>
+                                        <span>
+                                            {getEventLabel(event, isZh)}
+                                        </span>
                                     </label>
                                 ))}
                             </div>
                         </div>
                         <div className="flex items-center justify-between rounded-md border p-3">
-                            <Label htmlFor="webhook-enabled">Enabled</Label>
+                            <Label htmlFor="webhook-enabled">
+                                {isZh ? "已启用" : "Enabled"}
+                            </Label>
                             <Switch
                                 id="webhook-enabled"
                                 checked={form.enabled}
@@ -260,7 +311,7 @@ export function WebhookEditorDialog({
                                 onClick={() => onOpenChange(false)}
                                 disabled={isSaving}
                             >
-                                Cancel
+                                {isZh ? "取消" : "Cancel"}
                             </Button>
                             <Button
                                 type="submit"
@@ -270,7 +321,7 @@ export function WebhookEditorDialog({
                                     form.events.length === 0
                                 }
                             >
-                                Save
+                                {isZh ? "保存" : "Save"}
                             </Button>
                         </div>
                     </form>

@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
+import { useTranslation } from "@/lib/i18n";
 
 interface StorageSectionProps {
     isHosted?: boolean;
@@ -34,6 +35,9 @@ interface StorageUsage {
 }
 
 export function StorageSection({ isHosted = false }: StorageSectionProps) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
     const { isLoadingSettings, isSavingSettings, setIsLoadingSettings } =
         useSettings();
     const [autoDeleteRecordings, setAutoDeleteRecordings] = useState(false);
@@ -190,7 +194,11 @@ export function StorageSection({ isHosted = false }: StorageSectionProps) {
                 if (typeof prev === "number" || prev === null)
                     setRetentionDays(prev);
             }
-            toast.error("Failed to save settings. Changes reverted.");
+            toast.error(
+                isZh
+                    ? "保存设置失败。更改已撤销。"
+                    : "Failed to save settings. Changes reverted.",
+            );
         }
     };
 
@@ -205,8 +213,12 @@ export function StorageSection({ isHosted = false }: StorageSectionProps) {
     return (
         <div className="space-y-6">
             <SettingsSectionHeader
-                title="Storage"
-                description="Where Riffado keeps the audio files behind your recordings."
+                title={isZh ? "数据存储" : "Storage"}
+                description={
+                    isZh
+                        ? "配置 Riffado 用来存储音频文件的位置与清理策略。"
+                        : "Where Riffado keeps the audio files behind your recordings."
+                }
                 icon={HardDrive}
             />
 
@@ -230,7 +242,9 @@ export function StorageSection({ isHosted = false }: StorageSectionProps) {
                 />
             ) : (
                 <div className="rounded-lg border border-dashed bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
-                    Couldn't load storage usage. Refresh to try again.
+                    {isZh
+                        ? "无法加载存储使用详情。请刷新页面重试。"
+                        : "Couldn't load storage usage. Refresh to try again."}
                 </div>
             )}
 
@@ -250,21 +264,32 @@ export function StorageSection({ isHosted = false }: StorageSectionProps) {
             {!isHosted && (
                 <div className="rounded-lg border bg-card/40 px-4 py-3 space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Backend</span>
+                        <span className="text-muted-foreground">
+                            {isZh ? "存储后端类型" : "Backend"}
+                        </span>
                         <span className="font-medium capitalize">
-                            {usage?.storageType ?? "local"}
+                            {usage?.storageType === "local"
+                                ? isZh
+                                    ? "本地磁盘"
+                                    : "local"
+                                : (usage?.storageType ?? "local")}
                         </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        Storage backend is configured at the instance level via
-                        environment variables.
+                        {isZh
+                            ? "存储后端类型需在系统部署时通过环境变量进行全局配置。"
+                            : "Storage backend is configured at the instance level via environment variables."}
                     </p>
                 </div>
             )}
 
             <SettingsCard
-                title="Auto-delete old recordings"
-                description="Automatically delete recordings older than the retention period."
+                title={isZh ? "自动删除历史录音" : "Auto-delete old recordings"}
+                description={
+                    isZh
+                        ? "在到达指定的保存天数后，自动清理并删除老旧录音文件。"
+                        : "Automatically delete recordings older than the retention period."
+                }
                 action={
                     <Switch
                         id="auto-delete"
@@ -290,7 +315,7 @@ export function StorageSection({ isHosted = false }: StorageSectionProps) {
                 {autoDeleteRecordings && (
                     <div className="space-y-2">
                         <Label htmlFor="retention-days">
-                            Retention period (days)
+                            {isZh ? "最大保留天数" : "Retention period (days)"}
                         </Label>
                         <Input
                             id="retention-days"
@@ -343,8 +368,9 @@ export function StorageSection({ isHosted = false }: StorageSectionProps) {
                             placeholder="30"
                         />
                         <p className="text-xs text-muted-foreground">
-                            Recordings older than this will be automatically
-                            deleted (1-365 days)
+                            {isZh
+                                ? "录音文件保存超过此天数后将被系统自动清理删除 (支持 1-365 天)"
+                                : "Recordings older than this will be automatically deleted (1-365 days)"}
                         </p>
                     </div>
                 )}

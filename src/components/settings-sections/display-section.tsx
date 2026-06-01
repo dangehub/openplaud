@@ -14,6 +14,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useSettings } from "@/hooks/use-settings";
+import { useTranslation } from "@/lib/i18n";
 
 const dateTimeFormatOptions = [
     {
@@ -50,6 +51,96 @@ const themeOptions = [
 ];
 
 export function DisplaySection() {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
+
+    const getThemeLabel = (value: string) => {
+        if (!isZh) {
+            return (
+                themeOptions.find((opt) => opt.value === value)?.label ||
+                "System"
+            );
+        }
+        switch (value) {
+            case "light":
+                return "浅色";
+            case "dark":
+                return "深色";
+            case "system":
+                return "跟随系统";
+            default:
+                return "跟随系统";
+        }
+    };
+
+    const getThemeDescription = (value: string) => {
+        if (!isZh) {
+            return (
+                themeOptions.find((opt) => opt.value === value)?.description ||
+                ""
+            );
+        }
+        if (value === "system") return "自动适配系统外观偏好";
+        return "";
+    };
+
+    const getSortOrderLabel = (value: string) => {
+        if (!isZh) {
+            return (
+                sortOrderOptions.find((opt) => opt.value === value)?.label ||
+                "Newest first"
+            );
+        }
+        switch (value) {
+            case "newest":
+                return "最新优先";
+            case "oldest":
+                return "最旧优先";
+            case "name":
+                return "按名称排序";
+            default:
+                return "最新优先";
+        }
+    };
+
+    const getDateTimeFormatLabel = (value: string) => {
+        if (!isZh) {
+            return (
+                dateTimeFormatOptions.find((opt) => opt.value === value)
+                    ?.label || "Relative"
+            );
+        }
+        switch (value) {
+            case "relative":
+                return "相对时间";
+            case "absolute":
+                return "绝对时间";
+            case "iso":
+                return "ISO 格式";
+            default:
+                return "相对时间";
+        }
+    };
+
+    const getDateTimeFormatDescription = (value: string) => {
+        if (!isZh) {
+            return (
+                dateTimeFormatOptions.find((opt) => opt.value === value)
+                    ?.description || ""
+            );
+        }
+        switch (value) {
+            case "relative":
+                return "例如：2 小时前";
+            case "absolute":
+                return "例如：2024年1月15日 下午3:45";
+            case "iso":
+                return "例如：2024-01-15T15:45:00Z";
+            default:
+                return "";
+        }
+    };
+
     const { isLoadingSettings, isSavingSettings, setIsLoadingSettings } =
         useSettings();
     const [dateTimeFormat, setDateTimeFormat] = useState("relative");
@@ -149,7 +240,11 @@ export function DisplaySection() {
                     const prev = previousValues.theme;
                     if (typeof prev === "string") setTheme(prev);
                 }
-                toast.error("Failed to save settings. Changes reverted.");
+                toast.error(
+                    isZh
+                        ? "保存设置失败。更改已撤销。"
+                        : "Failed to save settings. Changes reverted.",
+                );
             }
         };
 
@@ -171,13 +266,19 @@ export function DisplaySection() {
     return (
         <div className="space-y-6">
             <SettingsSectionHeader
-                title="Display"
-                description="How dates, lists, and the overall UI present themselves."
+                title={isZh ? "显示偏好" : "Display"}
+                description={
+                    isZh
+                        ? "配置日期显示格式、录音列表排序以及应用的视觉主题外观。"
+                        : "How dates, lists, and the overall UI present themselves."
+                }
                 icon={Monitor}
             />
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="date-time-format">Date/time format</Label>
+                    <Label htmlFor="date-time-format">
+                        {isZh ? "日期时间格式" : "Date/time format"}
+                    </Label>
                     <Select
                         value={dateTimeFormat}
                         onValueChange={(value) => {
@@ -190,9 +291,7 @@ export function DisplaySection() {
                     >
                         <SelectTrigger id="date-time-format" className="w-full">
                             <SelectValue>
-                                {dateTimeFormatOptions.find(
-                                    (opt) => opt.value === dateTimeFormat,
-                                )?.label || "Relative"}
+                                {getDateTimeFormatLabel(dateTimeFormat)}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -202,9 +301,15 @@ export function DisplaySection() {
                                     value={option.value}
                                 >
                                     <div>
-                                        <div>{option.label}</div>
+                                        <div>
+                                            {getDateTimeFormatLabel(
+                                                option.value,
+                                            )}
+                                        </div>
                                         <div className="text-xs text-muted-foreground">
-                                            {option.description}
+                                            {getDateTimeFormatDescription(
+                                                option.value,
+                                            )}
                                         </div>
                                     </div>
                                 </SelectItem>
@@ -215,7 +320,9 @@ export function DisplaySection() {
 
                 <div className="space-y-2">
                     <Label htmlFor="sort-order">
-                        Recording list sort order
+                        {isZh
+                            ? "录音列表排序方式"
+                            : "Recording list sort order"}
                     </Label>
                     <Select
                         value={recordingListSortOrder}
@@ -229,10 +336,7 @@ export function DisplaySection() {
                     >
                         <SelectTrigger id="sort-order" className="w-full">
                             <SelectValue>
-                                {sortOrderOptions.find(
-                                    (opt) =>
-                                        opt.value === recordingListSortOrder,
-                                )?.label || "Newest first"}
+                                {getSortOrderLabel(recordingListSortOrder)}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -241,7 +345,7 @@ export function DisplaySection() {
                                     key={option.value}
                                     value={option.value}
                                 >
-                                    {option.label}
+                                    {getSortOrderLabel(option.value)}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -249,7 +353,9 @@ export function DisplaySection() {
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="items-per-page">Items per page</Label>
+                    <Label htmlFor="items-per-page">
+                        {isZh ? "每页显示条数" : "Items per page"}
+                    </Label>
                     <Input
                         id="items-per-page"
                         type="number"
@@ -272,12 +378,14 @@ export function DisplaySection() {
                         }}
                     />
                     <p className="text-xs text-muted-foreground">
-                        Number of recordings to display per page (10-100)
+                        {isZh
+                            ? "每页展示的录音数量 (10-100 条)"
+                            : "Number of recordings to display per page (10-100)"}
                     </p>
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="theme">Theme</Label>
+                    <Label htmlFor="theme">{isZh ? "外观主题" : "Theme"}</Label>
                     <Select
                         value={theme}
                         onValueChange={(value) => {
@@ -287,10 +395,7 @@ export function DisplaySection() {
                         disabled={isSavingSettings}
                     >
                         <SelectTrigger id="theme" className="w-full">
-                            <SelectValue>
-                                {themeOptions.find((opt) => opt.value === theme)
-                                    ?.label || "System"}
-                            </SelectValue>
+                            <SelectValue>{getThemeLabel(theme)}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                             {themeOptions.map((option) => (
@@ -299,10 +404,12 @@ export function DisplaySection() {
                                     value={option.value}
                                 >
                                     <div>
-                                        <div>{option.label}</div>
+                                        <div>{getThemeLabel(option.value)}</div>
                                         {option.description && (
                                             <div className="text-xs text-muted-foreground">
-                                                {option.description}
+                                                {getThemeDescription(
+                                                    option.value,
+                                                )}
                                             </div>
                                         )}
                                     </div>
