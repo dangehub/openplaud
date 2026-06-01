@@ -1,148 +1,147 @@
 <div align="center">
 
-# 🎙️ OpenPlaud (中国区支持版)
+# 🎙️ OpenPlaud / Riffado (中国区支持版)
 
-**Plaud Note 设备的自托管 AI 语音转写界面**
+**录音设备的开源 AI 语音转写与整理伴侣**
 
-*用你自己的 OpenAI 兼容 API 密钥替换 Plaud 的 20美元/月 AI 订阅服务*
+*用你自己低成本的 OpenAI 兼容 API 密钥，替代昂贵的官方 AI 订阅服务。*
 
-> 💡 **本项目派生自官方 OpenPlaud**，在原版基础上**新增了对 Plaud 中国区账号 (`plaud.cn`) 的完整支持**。你可以使用你的国内 Plaud 账号直接登录同步录音！
+> 💡 **本项目派生自上游开源项目 Riffado (原名 OpenPlaud)**，在此基础上**新增了对 Plaud 中国区账号 (`plaud.cn`) 的完整支持**。您可以使用您的国内 Plaud 账号直接登录、同步录音并免编译运行！
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/typescript-5.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
 
-[快速开始](#-快速开始) • [特性](#-特性) • [配置指南](#-配置指南) • [本项目差异](#-与官方原版的区别)
+[快速开始](#-快速开始) • [项目差异](#-与上游原版的区别) • [配置指南](#-配置指南) • [官方文档](https://riffado.com/docs)
 
 </div>
 
 ---
 
-## 🌟 与官方原版的区别
+## 🌟 与上游原版的区别
 
-官方的 OpenPlaud 仅支持全球版（`plaud.ai`，含亚太、欧洲等区域），**不支持**国内中国区注册的账号 (`plaud.cn`)。
+上游的官方 Riffado (原 OpenPlaud) 仅支持全球版（`plaud.ai`，含亚太、欧洲等区域），**不支持**国内中国区注册的账号 (`plaud.cn`)。
 
 本项目在官方基础上进行了如下定制化改进：
 1. **支持中国区服务器 (`api.plaud.cn`)**：在绑定账号时，直接支持输入中国区账号验证码，或粘贴 `web.plaud.cn` 的 Access Token。
-2. **修复特定区域限流 Date 格式问题**：修复了在访问国内节点时可能出现的限流解析异常。
-3. **定制化的 Docker 镜像**：提供基于 `qudange/openplaud` 的专用镜像，无需自己编译，拉取即用。
+2. **移除 `wreq-js` 原生二进制依赖**：与上游保持同步，完全移除了 Rust 编写的原生模块，改用 100% 纯 TypeScript/JS 原生 `fetch` 方案，使得边缘部署与容器构建极速、轻量。
+3. **修复特定区域限流 Date 格式问题**：修复了在访问国内节点时可能出现的限流解析与数据库插入异常。
+4. **定制化的 Docker 镜像**：提供基于 `qudange/openplaud` 的专用镜像，无需自己编译，拉取即用。
 
 ---
 
-## ✨ 特性
+## ⚡ 快速开始
 
-### 🔐 隐私与控制
-- **私有化部署** - 对你的数据和 API 密钥拥有完全控制权
-- **凭证加密** - 对所有敏感数据使用 AES-256-GCM 进行静态加密存储
-- **无供应商锁定** - 你的录音，你自己的基础设施
+您只需要安装好 Docker，拥有一个 Plaud 账号以及（可选的）任何兼容 OpenAI 接口的 AI 提供商密钥。
 
-### 🤖 AI 与 转写
-- **通用 AI 支持** - 支持任何兼容 OpenAI 格式的 API：
-  - OpenAI, Groq, Together AI, OpenRouter, 零一万物, DeepSeek, 智谱等
-  - 本地模型：LM Studio, Ollama
-- **浏览器本地转写** - 使用 Transformers.js 在客户端进行转写（零 API 成本！）
-- **AI 标题生成** - 根据转写内容自动生成描述性标题
-- **多 AI 提供商** - 可配置并在多个不同的提供商之间灵活切换
+### 1. 下载配置文件
 
-### 💾 存储与同步
-- **灵活存储** - 本地文件系统 或 S3 兼容存储（AWS S3, 阿里云 OSS, 腾讯云 COS, MinIO, Cloudflare R2 等）
-- **自动同步** - 自动从 Plaud 设备下载录音
-- **自定义间隔** - 设置你自己的同步计划
-
-### 📤 导出与通知
-- **多种导出格式** - JSON, TXT, SRT, VTT 字幕格式
-- **完整备份** - 一键导出所有数据
-- **自动化 API & Webhooks** - 带有签名的 webhook 用于第三方自动化集成
-- **浏览器与邮件通知** - 新录音的实时提醒
-
----
-
-## 🚀 快速开始
-
-### 前置条件
-- 🐳 确保服务器已安装 Docker & Docker Compose
-- 🎙️ 拥有 [plaud.cn](https://plaud.cn) 或 [plaud.ai](https://plaud.ai) 账号的 Plaud Note 设备
-- 🤖 OpenAI 兼容的 API 密钥
-
-### Docker 部署（推荐）
-
-本项目已打包并发布到了 Docker Hub，你可以非常方便地使用定制镜像 `qudange/openplaud` 来运行。
-
-**1. 创建目录并下载配置文件**
-
-从本仓库下载最新的 `docker-compose.yml` 和 `.env.example` 文件：
+创建一个目录并下载部署所需的配置文件：
 
 ```bash
 mkdir openplaud && cd openplaud
-
 curl -fLO https://raw.githubusercontent.com/dangehub/openplaud/main/docker-compose.yml
 curl -fL  https://raw.githubusercontent.com/dangehub/openplaud/main/.env.example -o .env
 ```
 
-**2. 生成密钥并编辑 `.env`**
+### 2. 生成安全密钥
 
-你需要生成两个 32 字节的随机十六进制字符串作为安全密钥：
+在终端中运行以下命令生成随机密钥，并粘贴填入 `.env` 配置文件中的 `BETTER_AUTH_SECRET` 和 `ENCRYPTION_KEY`：
 
 ```bash
-# 生成两个全新的密钥 — 复制并将它们粘贴到 .env 文件中
-echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)"
-echo "ENCRYPTION_KEY=$(openssl rand -hex 32)"
+openssl rand -hex 32
 ```
 
 打开 `.env` 文件并至少设置以下几项：
 
 ```env
-BETTER_AUTH_SECRET=<粘贴你生成的密钥>
-ENCRYPTION_KEY=<粘贴你生成的密钥>
+BETTER_AUTH_SECRET=<粘贴你生成的32位密钥>
+ENCRYPTION_KEY=<粘贴你生成的32位密钥>
 APP_URL=http://localhost:3000
 
-# 默认使用 latest 镜像
+# 默认使用镜像版本
 OPENPLAUD_VERSION=latest
 ```
 
-**3. 启动应用**
+### 3. 启动应用
 
-`docker-compose.yml` 已经默认配置为从 `qudange/openplaud` 拉取镜像。直接执行：
+本项目已预配置为从 `qudange/openplaud` 拉取镜像。直接执行以下命令启动服务：
 
 ```bash
 docker compose up -d
 ```
 
-**4. 访问 OpenPlaud**
+### 4. 访问系统
 
-在浏览器中打开 **http://localhost:3000** 并创建你的本地账号。引导向导将带你完成连接 Plaud 设备、配置 AI 提供商、存储和同步首选项的过程。在选择区域时，你可以选择**China (api.plaud.cn)**。
+在浏览器中打开 **http://localhost:3000/register** 并创建您的本地管理员账号。系统引导向导将带您完成连接 Plaud 设备、配置 AI 提供商、配置存储和同步偏好的过程。当选择 Plaud 区域时，您可以直接选择 **China (api.plaud.cn)**。
+
+* **升级更新**：后续如需更新，直接运行 `docker compose pull && docker compose up -d` 即可，数据库迁移将在容器启动时自动安全运行。
 
 ---
 
-## 📖 配置指南
+## 📖 连接 Plaud 账号指南
 
-### 🔑 连接你的 Plaud 账号
+OpenPlaud 支持两种连接 Plaud 账号的方式：
 
-OpenPlaud 默认直接使用你的邮箱登录 Plaud —— 就像官方 Plaud App 一样：
+### 🔑 邮箱验证码登录 (推荐)
+直接使用您的邮箱进行 OTP 登录：
+1. 输入您在 [plaud.cn](https://plaud.cn)（中国区）或 [plaud.ai](https://plaud.ai)（全球区）注册的邮箱。
+2. 接收邮箱验证码并输入，系统将自动检测账号区域并进行加密绑定。
 
-1. 输入你在 [plaud.cn](https://plaud.cn) 或 plaud.ai 注册的邮箱
-2. 接收并输入验证码即可连接成功
+### 🔗 粘贴 Token 手动登录
+如果您是通过微信、Apple 或 Google 等第三方 OAuth 渠道注册的 Plaud 账号，或者验证码发送失败，可以采用手动抓取 Token 的方式：
+1. 在浏览器新标签页登录 [web.plaud.cn](https://web.plaud.cn)（或全球版 [web.plaud.ai](https://web.plaud.ai)）。
+2. 按 `F12` 打开开发者工具的 **网络 (Network)** 面板，然后刷新页面。
+3. 点击任意发送到 `api.plaud.cn` (或 `api.plaud.ai`) 的 API 请求。
+4. 在请求头 (Headers) 中找到 `Authorization`，复制 `Bearer ` 后面那一长串 Token 字符串。
+5. 在 OpenPlaud 绑定页面选择 **"粘贴 Token (Paste token)"** 模式，选择对应区域并填入即可连接。
 
-> **⚠️ 注意：如果你是通过微信 / Apple / Google 等第三方方式登录**
-> 
-> 由于无法直接进行 OAuth 跳转，你需要：
-> 1. 在浏览器新标签页登录 `web.plaud.cn`（或 `web.plaud.ai`）
-> 2. 按 F12 打开开发者工具的 **网络(Network)** 面板，然后刷新页面
-> 3. 点击任意发送到 `api.plaud.cn` (或 `api.plaud.ai`) 的请求
-> 4. 找到 `Authorization` 请求头，复制 `Bearer ` 后面的超长 Token 字符串
-> 5. 在 OpenPlaud 中选择 **"粘贴 Token (Paste token)"** 模式，选择对应区域并填入即可接入。
+> 🔒 **安全承诺**：每一行处理您凭证的代码均完全开源并可审计 —— [验证码发送路由](src/app/api/plaud/auth/send-code/route.ts) · [验证路由](src/app/api/plaud/auth/verify/route.ts) · [AES-256-GCM 加密模块](src/lib/encryption.ts)。所有敏感凭证都在入库前在您的服务器本地进行了强加密，绝不向任何第三方泄露。
 
-### 💾 存储选项
-默认使用本地文件存储 (映射在 `/app/audio` 容器卷)。无需任何额外配置即可使用。
-如果你希望节省服务器磁盘空间，可以随时在设置中切换到兼容 S3 的对象存储（如阿里云 OSS、腾讯云 COS、MinIO 等）。
+---
 
-### 🤖 AI 提供商设置
-你可以填入任何兼容 OpenAI API 格式的地址和密钥。例如国内的 DeepSeek、通义千问等，只需将他们的 Base URL 和 API Key 填入设置中即可，非常灵活。
+## 💾 存储与 AI 配置
+
+### 1. 存储选项
+默认使用本地磁盘存储（保存在容器映射的 `/app/audio` 卷中），开箱即用。
+如果您想节省本地磁盘空间，可以随时在设置中切换到兼容 S3 协议的对象存储（如阿里云 OSS、腾讯云 COS、MinIO、Cloudflare R2 等）。
+
+### 2. 自由配置 AI
+您可以配置任何兼容 OpenAI 格式的 AI 服务提供商：
+* **云端模型**：DeepSeek (深度求索)、通义千问、Kimi、Groq、Together AI、OpenRouter 等。
+* **本地模型**：LM Studio、Ollama、LocalAI 等。
+* **零成本本地转写**：支持直接在浏览器中使用 WebGPU / WebAssembly (Transformers.js) 在您的设备本地运行 Whisper 转写，完全不产生任何 API 费用，绝对保护隐私！
+
+---
+
+## 📚 官方文档
+
+完整的架构说明、配置项和环境变量列表均可参考官方文档 **[riffado.com/docs](https://riffado.com/docs)**：
+
+- [环境变量配置参考](https://riffado.com/docs/self-hosting/environment-variables)
+- [S3 兼容存储配置](https://riffado.com/docs/self-hosting/storage-s3)
+- [邮件/SMTP 报警通知](https://riffado.com/docs/self-hosting/email-smtp)
+- [数据备份与恢复](https://riffado.com/docs/guides/backup-and-restore)
+- [Webhooks 自动流集成](https://riffado.com/docs/guides/automation-and-webhooks)
+- [数据静态加密安全模型](https://riffado.com/docs/reference/encryption-at-rest)
+
+---
+
+## ⚖️ 免责声明 (Disclaimer)
+
+* **非官方关联**：本项目是一个独立的开源项目。与 Plaud Inc. 或其任何子公司无任何关联、背书或赞助关系。“Plaud” 品牌及相关标志为其各自所有者的财产，在此仅用于描述性的互操作性说明（合理使用）。
+* **第三方设备与服务**：本项目旨在与用户选择连接的第三方硬件和服务（包括 Plaud 录音设备、S3 存储和 AI 提供商）实现互操作。用户须自行负责遵守与其连接的任何第三方设备或服务相关的服务条款、可接受使用政策及法律法规。
 
 ---
 
 ## 📝 许可证
 
-**AGPL-3.0 许可证** – 详情见 [LICENSE](LICENSE) 文件
+**AGPL-3.0 许可证** – 详情见 [LICENSE](LICENSE) 文件。
+您可以自由分发、修改和私有化部署。如果您将修改后的版本作为网络服务提供给他人，必须公开您的修改源代码。
 
-本项目为开源项目，修改、分发及提供基于本项目的网络服务均需遵循原项目的 AGPL 开源协议。
+---
+
+## 🙏 致谢
+
+本项目原作者为 **Perier**，现由 Riffado 开源社区和各分叉版贡献者共同维护。
+感谢所有对自托管和数据隐私充满热情的开发者！
