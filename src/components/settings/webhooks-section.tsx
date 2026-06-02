@@ -161,14 +161,14 @@ function WebhookRow({
 
     return (
         <div className="space-y-3 rounded-lg border p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate font-medium">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between w-full min-w-0">
+                <div className="min-w-0 space-y-2 flex-1">
+                    <div className="flex flex-wrap items-center gap-2 w-full min-w-0">
+                        <h3 className="truncate font-medium max-w-full">
                             {webhook.description || webhook.url}
                         </h3>
                         <span
-                            className={`rounded border px-2 py-0.5 text-xs ${
+                            className={`rounded border px-2 py-0.5 text-xs shrink-0 ${
                                 webhook.enabled
                                     ? "text-primary"
                                     : "text-muted-foreground"
@@ -183,12 +183,12 @@ function WebhookRow({
                                   : "Disabled"}
                         </span>
                         {webhook.lastDeliveryStatus && (
-                            <span className="rounded border px-2 py-0.5 text-xs">
+                            <span className="rounded border px-2 py-0.5 text-xs shrink-0">
                                 {webhook.lastDeliveryStatus}
                             </span>
                         )}
                     </div>
-                    <p className="truncate font-mono text-xs text-muted-foreground">
+                    <p className="truncate font-mono text-xs text-muted-foreground w-full">
                         {webhook.url}
                     </p>
                     <div className="flex flex-wrap gap-1">
