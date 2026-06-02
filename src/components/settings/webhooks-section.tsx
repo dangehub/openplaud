@@ -79,7 +79,7 @@ export function WebhooksSection() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full min-w-0 overflow-hidden">
             <SettingsSectionHeader
                 title={isZh ? "Webhooks" : "Webhooks"}
                 description={
@@ -112,7 +112,7 @@ export function WebhooksSection() {
                     </Button>
                 </div>
             ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 w-full min-w-0">
                     {webhooks.map((webhook) => (
                         <WebhookRow
                             key={webhook.id}
@@ -160,15 +160,15 @@ function WebhookRow({
     const isZh = locale === "zh-CN";
 
     return (
-        <div className="space-y-3 rounded-lg border p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between w-full min-w-0">
-                <div className="min-w-0 space-y-2 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 w-full min-w-0">
-                        <h3 className="truncate font-medium max-w-full">
-                            {webhook.description || webhook.url}
-                        </h3>
+        <div className="rounded-lg border p-4 w-full min-w-0 overflow-hidden space-y-3">
+            <div className="min-w-0 space-y-2 w-full">
+                <div className="flex items-center gap-2 w-full min-w-0">
+                    <h3 className="truncate font-medium flex-1 min-w-0">
+                        {webhook.description || webhook.url}
+                    </h3>
+                    <div className="flex gap-2 shrink-0">
                         <span
-                            className={`rounded border px-2 py-0.5 text-xs shrink-0 ${
+                            className={`rounded border px-2 py-0.5 text-xs ${
                                 webhook.enabled
                                     ? "text-primary"
                                     : "text-muted-foreground"
@@ -176,61 +176,66 @@ function WebhookRow({
                         >
                             {webhook.enabled
                                 ? isZh
-                                    ? "已启用"
+                                    ? "\u5df2\u542f\u7528"
                                     : "Enabled"
                                 : isZh
-                                  ? "已禁用"
+                                  ? "\u5df2\u7981\u7528"
                                   : "Disabled"}
                         </span>
                         {webhook.lastDeliveryStatus && (
-                            <span className="rounded border px-2 py-0.5 text-xs shrink-0">
+                            <span className="rounded border px-2 py-0.5 text-xs">
                                 {webhook.lastDeliveryStatus}
                             </span>
                         )}
                     </div>
-                    <p className="truncate font-mono text-xs text-muted-foreground w-full">
-                        {webhook.url}
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                        {webhook.events.map((event) => (
-                            <span
-                                key={event}
-                                className="rounded bg-muted px-2 py-0.5 text-xs"
-                            >
-                                {event}
-                            </span>
-                        ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                        {isZh ? "上次递送：" : "Last delivery: "}{" "}
-                        {formatWebhookDate(webhook.lastDeliveryAt, isZh)}
-                    </p>
                 </div>
-                <div className="flex gap-2 shrink-0">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onShowDeliveries(webhook)}
-                    >
-                        {isZh ? "递送记录" : "Deliveries"}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => onEdit(webhook)}
-                        aria-label={isZh ? "编辑 Webhook" : "Edit webhook"}
-                    >
-                        <Pencil className="size-4" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => onDelete(webhook.id)}
-                        aria-label={isZh ? "删除 Webhook" : "Delete webhook"}
-                    >
-                        <Trash2 className="size-4 text-destructive" />
-                    </Button>
+                <p className="truncate font-mono text-xs text-muted-foreground w-full">
+                    {webhook.url}
+                </p>
+                <div className="flex flex-wrap gap-1">
+                    {webhook.events.map((event) => (
+                        <span
+                            key={event}
+                            className="rounded bg-muted px-2 py-0.5 text-xs"
+                        >
+                            {event}
+                        </span>
+                    ))}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                    {isZh
+                        ? "\u4e0a\u6b21\u9012\u9001\uff1a"
+                        : "Last delivery: "}{" "}
+                    {formatWebhookDate(webhook.lastDeliveryAt, isZh)}
+                </p>
+            </div>
+            <div className="flex gap-2 border-t pt-3">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onShowDeliveries(webhook)}
+                >
+                    {isZh ? "\u9012\u9001\u8bb0\u5f55" : "Deliveries"}
+                </Button>
+                <div className="flex-1" />
+                <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => onEdit(webhook)}
+                    aria-label={isZh ? "\u7f16\u8f91 Webhook" : "Edit webhook"}
+                >
+                    <Pencil className="size-4" />
+                </Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => onDelete(webhook.id)}
+                    aria-label={
+                        isZh ? "\u5220\u9664 Webhook" : "Delete webhook"
+                    }
+                >
+                    <Trash2 className="size-4 text-destructive" />
+                </Button>
             </div>
         </div>
     );

@@ -25,6 +25,7 @@ import {
     encryptText,
 } from "@/lib/encryption/fields";
 import { AppError, apiHandler, ErrorCode } from "@/lib/errors";
+import { emitEvent } from "@/lib/webhooks/emit";
 
 type IdContext = { params: Promise<{ id: string }> };
 
@@ -200,23 +201,30 @@ export const POST = apiHandler<IdContext>(async (request, context) => {
         ? `${baseSystem} ${languageDirective}`
         : baseSystem;
 
-    const response = await openai.chat.completions.create({
-        model,
-        messages: [
-            {
-                role: "system",
-                content: systemContent,
-            },
-            {
-                role: "user",
-                content: prompt,
-            },
-        ],
-        temperature: 0.5,
-        max_tokens: 2000,
-    });
-
-    const rawContent = response.choices[0]?.message?.content?.trim() || "";
+    let rawContent = "";
+    try {
+        const response = await openai.chat.completions.create({
+            model,
+            messages: [
+                {
+                    role: "system",
+                    content: systemContent,
+                },
+                {
+                    role: "user",
+                    content: prompt,
+                },
+            ],
+            temperature: 0.5,
+            max_tokens: 2000,
+        });
+        rawContent = response.choices[0]?.message?.content?.trim() || "";
+    } catch (error) {
+        await emitEvent("summary.failed", session.user.id, id, {
+            error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+    }
 
     // Parse the JSON response
     let summary = "";
@@ -339,6 +347,8 @@ export const POST = apiHandler<IdContext>(async (request, context) => {
         }
         throw txError;
     }
+
+    await emitEvent("summary.completed", session.user.id, id);
 
     return NextResponse.json({
         summary,

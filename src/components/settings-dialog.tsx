@@ -58,14 +58,14 @@ export function SettingsDialog({
                     Customize your settings here. Use arrow keys to navigate
                     sections, Enter or Space to select, and Escape to close.
                 </DialogDescription>
-                <SidebarProvider className="items-start">
+                <SidebarProvider className="items-start overflow-hidden min-w-0">
                     <SettingsNavSidebar
                         activeSection={activeSection}
                         keyboardSelectedIndex={keyboardSelectedIndex}
                         onSectionChange={handleSectionChange}
                     />
 
-                    <main className="flex h-[600px] flex-1 flex-col overflow-hidden">
+                    <main className="flex h-[600px] flex-1 flex-col overflow-hidden min-w-0">
                         {/*
                           Desktop: header bar is intentionally empty -- the
                           sidebar's active item plus the section h2 inside
@@ -83,10 +83,10 @@ export function SettingsDialog({
                             />
                         </header>
 
-                        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 pt-6">
+                        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 pt-6 min-w-0">
                             <div
                                 key={activeSection}
-                                className="animate-in fade-in-0 duration-200"
+                                className="animate-in fade-in-0 duration-200 w-full min-w-0"
                             >
                                 <SettingsContent
                                     activeSection={activeSection}

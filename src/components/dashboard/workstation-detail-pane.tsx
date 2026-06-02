@@ -1,10 +1,12 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Webhook } from "lucide-react";
 import { RecordingPlayer } from "@/components/dashboard/recording-player";
 import { TranscriptionPanel } from "@/components/dashboard/transcription-panel";
+import { WebhookTrigger } from "@/components/dashboard/webhook-trigger";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { Recording } from "@/types/recording";
 
@@ -53,6 +55,8 @@ export function WorkstationDetailPane({
     initialAutoPlayNext,
     scrubberStyle,
 }: Props) {
+    const { locale } = useTranslation();
+    const isZh = locale === "zh-CN";
     return (
         <div
             className={cn(
@@ -103,6 +107,17 @@ export function WorkstationDetailPane({
                         isTranscribing={isCurrentTranscribing}
                         onTranscribe={onTranscribe}
                     />
+                    <Card>
+                        <CardContent className="flex items-center justify-between py-3">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Webhook className="size-4" />
+                                <span>
+                                    {isZh ? "Webhook 调试" : "Webhook Debug"}
+                                </span>
+                            </div>
+                            <WebhookTrigger recordingId={currentRecording.id} />
+                        </CardContent>
+                    </Card>
                 </>
             ) : (
                 <Card>
