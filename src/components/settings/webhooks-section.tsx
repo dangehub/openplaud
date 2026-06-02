@@ -206,7 +206,7 @@ function WebhookRow({
                         {formatWebhookDate(webhook.lastDeliveryAt, isZh)}
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0">
                     <Button
                         variant="outline"
                         size="sm"
