@@ -32,50 +32,116 @@
 
 ## ⚡ 快速开始
 
-您只需要安装好 Docker，拥有一个 Plaud 账号以及（可选的）任何兼容 OpenAI 接口的 AI 提供商密钥。
+您只需要在服务器上安装好 Docker，拥有一个 Plaud 账号以及任何兼容 OpenAI 接口的 AI 提供商密钥。
 
-### 1. 下载配置文件
+### 1. 创建部署目录与配置文件
 
-创建一个目录并下载部署所需的配置文件：
+在您的服务器上创建一个专属目录并进入：
 
 ```bash
 mkdir openplaud && cd openplaud
-curl -fLO https://raw.githubusercontent.com/dangehub/openplaud/main/docker-compose.yml
-curl -fL  https://raw.githubusercontent.com/dangehub/openplaud/main/.env.example -o .env
 ```
 
-### 2. 生成安全密钥
+在此目录下新建 `docker-compose.yml` 文件。为了极佳的数据安全，我们**去除了数据库的外部端口映射**（只在 Docker 内部安全联通），并将所有持久化数据统一放置在当前目录下的 `./data` 子目录中：
 
-在终端中运行以下命令生成随机密钥，并粘贴填入 `.env` 配置文件中的 `BETTER_AUTH_SECRET` 和 `ENCRYPTION_KEY`：
+```yaml
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: riffado-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: riffado
+    volumes:
+      # 数据库数据持久化在当前目录下的 data/db 中
+      - ./data/db:/var/lib/postgresql/data
+    # 🔒 安全设计：不向外网暴露 5432 端口，仅在 Docker 局域网内与主应用联通
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: qudange/openplaud:${OPENPLAUD_VERSION:-latest}
+    container_name: openplaud-app
+    restart: unless-stopped
+    ports:
+      # 🌍 整个项目在服务器上仅对外暴露主应用的 3000 端口
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/riffado
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      DEFAULT_STORAGE_TYPE: ${DEFAULT_STORAGE_TYPE:-local}
+      LOCAL_STORAGE_PATH: ${LOCAL_STORAGE_PATH:-/app/audio}
+    volumes:
+      # 录音音频和转录数据持久化在当前目录下的 data/audio 中
+      - ./data/audio:/app/audio
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      start_period: 30s
+      retries: 3
+```
+
+### 2. 下载并配置环境变量
+
+下载环境变量模版文件并命名为 `.env`：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dangehub/openplaud/main/.env.example -o .env
+```
+
+接着，在终端运行以下命令，为密钥生成 2 个高强度的 32 位随机安全密钥：
 
 ```bash
 openssl rand -hex 32
 ```
 
-打开 `.env` 文件并至少设置以下几项：
+打开刚刚生成的 `.env` 文件，分别将这 2 个生成的密钥填入 `BETTER_AUTH_SECRET` 和 `ENCRYPTION_KEY` 中，并至少设置好以下基本项：
 
 ```env
-BETTER_AUTH_SECRET=<粘贴你生成的32位密钥>
-ENCRYPTION_KEY=<粘贴你生成的32位密钥>
-APP_URL=http://localhost:3000
+# 身份验证及数据加密密钥（必须填入您生成的32位随机安全密钥）
+BETTER_AUTH_SECRET=<第1个32位随机密钥>
+ENCRYPTION_KEY=<第2个32位随机密钥>
 
-# 默认使用镜像版本
+# 数据库安全密码（请修改为强密码，用于容器内部联通）
+POSTGRES_PASSWORD=your_strong_password
+
+# 应用访问地址
+APP_URL=http://<您的服务器IP>:3000
+
+# 默认使用的镜像版本
 OPENPLAUD_VERSION=latest
 ```
 
-### 3. 启动应用
+### 3. 一键启动应用
 
-本项目已预配置为从 `qudange/openplaud` 拉取镜像。直接执行以下命令启动服务：
+执行以下命令，Docker 将自动为您创建 `./data` 持久化文件夹并后台启动全部服务：
 
 ```bash
 docker compose up -d
 ```
 
-### 4. 访问系统
+### 4. 初始化与访问系统
 
-在浏览器中打开 **http://localhost:3000/register** 并创建您的本地管理员账号。系统引导向导将带您完成连接 Plaud 设备、配置 AI 提供商、配置存储和同步偏好的过程。当选择 Plaud 区域时，您可以直接选择 **China (api.plaud.cn)**。
+在浏览器中打开 **`http://<您的服务器IP>:3000/register`** 并创建您的本地管理员账号。系统引导向导将带您完成连接 Plaud 设备、配置 AI 提供商、配置存储和同步偏好的过程。当选择 Plaud 区域时，您可以直接选择 **China (api.plaud.cn)**。
 
-* **升级更新**：后续如需更新，直接运行 `docker compose pull && docker compose up -d` 即可，数据库迁移将在容器启动时自动安全运行。
+* **升级更新**：后续如需更新，直接运行以下命令即可，数据库迁移及升级将在容器启动时自动安全运行，不丢失任何录音数据：
+  ```bash
+  docker compose pull && docker compose up -d
+  ```
 
 ---
 
