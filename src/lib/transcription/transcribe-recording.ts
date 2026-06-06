@@ -8,6 +8,7 @@ import {
     transcriptions,
     userSettings,
 } from "@/db/schema";
+import { generateSummaryForRecording } from "@/lib/ai/generate-summary";
 import { generateTitleFromTranscription } from "@/lib/ai/generate-title";
 import { getTranscriptionStyle } from "@/lib/ai/provider-presets";
 import { decrypt } from "@/lib/encryption";
@@ -385,6 +386,14 @@ export async function transcribeRecording(
                 }
             } catch (error) {
                 console.error("Failed to generate title:", error);
+            }
+        }
+
+        if (settings?.autoSummarize) {
+            try {
+                await generateSummaryForRecording(userId, recordingId);
+            } catch (error) {
+                console.error("Failed to auto-generate summary:", error);
             }
         }
 

@@ -53,6 +53,7 @@ export function TranscriptionPanel({
         setSummaryExpanded,
         summaryPreset,
         setSummaryPreset,
+        customPrompts,
         handleSummarize,
         handleDeleteSummary,
     } = useTranscriptionSummary({
@@ -193,6 +194,17 @@ export function TranscriptionPanel({
                                                     </SelectItem>
                                                 ),
                                             )}
+                                            {customPrompts.length > 0 && (
+                                                <div className="h-px bg-border my-1 mx-2" />
+                                            )}
+                                            {customPrompts.map((preset) => (
+                                                <SelectItem
+                                                    key={preset.id}
+                                                    value={preset.id}
+                                                >
+                                                    {preset.name}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 )}

@@ -41,6 +41,23 @@ export function useTranscriptionSummary({
     const [isSummarizing, setIsSummarizing] = useState(false);
     const [summaryExpanded, setSummaryExpanded] = useState(true);
     const [summaryPreset, setSummaryPreset] = useState("general");
+    const [customPrompts, setCustomPrompts] = useState<
+        { id: string; name: string }[]
+    >([]);
+
+    useEffect(() => {
+        fetch("/api/settings/user")
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.summaryPrompt) {
+                    setCustomPrompts(data.summaryPrompt.customPrompts || []);
+                    if (data.summaryPrompt.selectedPrompt) {
+                        setSummaryPreset(data.summaryPrompt.selectedPrompt);
+                    }
+                }
+            })
+            .catch(() => {});
+    }, []);
 
     // Re-fetch trigger separate from the URL/id key so callers can
     // bump it imperatively (e.g. right after a re-transcribe finishes,
@@ -150,6 +167,7 @@ export function useTranscriptionSummary({
         setSummaryExpanded,
         summaryPreset,
         setSummaryPreset,
+        customPrompts,
         handleSummarize,
         handleDeleteSummary,
         refetchSummary,
