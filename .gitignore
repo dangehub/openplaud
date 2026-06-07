@@ -56,3 +56,5 @@ plans/
 # bun (we use pnpm; bun is only a runtime for scripts/tests)
 bun.lock
 /src/.source
+
+reference

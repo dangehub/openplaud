@@ -10,7 +10,7 @@ WORKDIR /app
 # explicitly in the builder stage below, where the full tree is available.
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
-RUN bun install --frozen-lockfile --ignore-scripts
+RUN bun install --registry=https://registry.npmmirror.com --frozen-lockfile --ignore-scripts
 
 # Build Next.js
 FROM base AS builder
@@ -25,6 +25,7 @@ ENV NODE_ENV=production
 # MDX page (see source.config.ts). The base `oven/bun:1` image is Debian
 # slim and ships without `git`, so install it here. Builder-stage only --
 # the `runner` stage below does not inherit this layer.
+RUN sed -i "s/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g" /etc/apt/sources.list.d/debian.sources
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*

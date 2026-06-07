@@ -22,6 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
 import {
     AI_OUTPUT_LANGUAGES,
@@ -161,6 +162,7 @@ export function SummarySection() {
         [],
     );
     const [outputLanguage, setOutputLanguage] = useState<string>("auto");
+    const [autoSummarize, setAutoSummarize] = useState(false);
 
     const [editingCustomPrompt, setEditingCustomPrompt] =
         useState<EditingPrompt | null>(null);
@@ -185,6 +187,9 @@ export function SummarySection() {
                         setOutputLanguage(data.aiOutputLanguage);
                     } else {
                         setOutputLanguage("auto");
+                    }
+                    if (typeof data.autoSummarize === "boolean") {
+                        setAutoSummarize(data.autoSummarize);
                     }
                 }
             } catch (error) {
@@ -237,6 +242,30 @@ export function SummarySection() {
             }
         } catch {
             setOutputLanguage(previous);
+            toast.error(
+                isZh
+                    ? "保存失败。更改已撤销。"
+                    : "Failed to save settings. Changes reverted.",
+            );
+        }
+    };
+
+    const handleAutoSummarizeChange = async (checked: boolean) => {
+        const previous = autoSummarize;
+        setAutoSummarize(checked);
+
+        try {
+            const response = await fetch("/api/settings/user", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ autoSummarize: checked }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to save settings");
+            }
+        } catch {
+            setAutoSummarize(previous);
             toast.error(
                 isZh
                     ? "保存失败。更改已撤销。"
@@ -336,7 +365,27 @@ export function SummarySection() {
                 icon={ListChecks}
             />
             <div className="space-y-4">
-                <div className="space-y-2">
+                <div className="flex items-center justify-between border rounded-lg p-4 bg-muted/30">
+                    <div className="space-y-0.5">
+                        <Label className="text-base font-medium">
+                            {isZh
+                                ? "自动总结新转录"
+                                : "Auto-summarize new transcriptions"}
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                            {isZh
+                                ? "当语音内容成功转录为文本后，自动在后台生成 AI 总结"
+                                : "Automatically generate AI summary when a transcription completes"}
+                        </p>
+                    </div>
+                    <Switch
+                        checked={autoSummarize}
+                        onCheckedChange={handleAutoSummarizeChange}
+                        disabled={isSavingSettings}
+                    />
+                </div>
+
+                <div className="space-y-2 pt-4">
                     <Label htmlFor="ai-output-language">
                         {isZh ? "AI 总结输出语言" : "AI output language"}
                     </Label>

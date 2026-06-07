@@ -379,6 +379,8 @@ export const userSettings = pgTable("user_settings", {
     syncInterval: integer("sync_interval").notNull().default(300000),
     // Auto-transcribe new recordings
     autoTranscribe: boolean("auto_transcribe").notNull().default(false),
+    // Auto-summarize new transcriptions
+    autoSummarize: boolean("auto_summarize").notNull().default(false),
     // Sync settings
     autoSyncEnabled: boolean("auto_sync_enabled").notNull().default(true),
     syncOnMount: boolean("sync_on_mount").notNull().default(true),
