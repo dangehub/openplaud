@@ -198,9 +198,10 @@ export async function generateSummaryForRecording(
                 },
             ],
             temperature: 0.5,
-            max_tokens: 2000,
+            max_tokens: 8000,
         });
         rawContent = response.choices[0]?.message?.content?.trim() || "";
+        console.log("[generateSummaryForRecording] AI raw response:", rawContent);
     } catch (error) {
         await emitEvent("summary.failed", userId, recordingId, {
             error: error instanceof Error ? error.message : String(error),
