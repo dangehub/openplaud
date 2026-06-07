@@ -176,7 +176,9 @@ export async function generateSummaryForRecording(
     );
 
     const baseSystem =
-        "You are a helpful assistant that summarizes audio transcriptions. Always respond with valid JSON only, no markdown formatting or code fences.";
+        "You are a helpful assistant that summarizes audio transcriptions. Always respond with valid JSON only, no markdown formatting or code fences. " +
+        'Your JSON response MUST use exactly these keys: { "summary": "Your main summary paragraph", "keyPoints": ["point 1", "point 2"], "actionItems": ["task 1"] }. ' +
+        "If there are no key points or action items, return empty arrays. Do NOT translate the JSON keys into other languages.";
     const systemContent = languageDirective
         ? `${baseSystem} ${languageDirective}`
         : baseSystem;
@@ -216,7 +218,12 @@ export async function generateSummaryForRecording(
             .replace(/\s*```$/i, "")
             .trim();
         const parsed = JSON.parse(cleanContent);
-        summary = parsed.summary || "";
+        summary =
+            parsed.summary ||
+            parsed.text ||
+            parsed.content ||
+            (typeof parsed === "object" && Object.values(parsed)[0]) ||
+            "";
         keyPoints = Array.isArray(parsed.keyPoints) ? parsed.keyPoints : [];
         actionItems = Array.isArray(parsed.actionItems)
             ? parsed.actionItems
