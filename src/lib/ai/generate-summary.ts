@@ -198,7 +198,6 @@ export async function generateSummaryForRecording(
                 },
             ],
             temperature: 0.5,
-            max_tokens: 8000,
         });
         rawContent = response.choices[0]?.message?.content?.trim() || "";
         console.log("[generateSummaryForRecording] AI raw response:", rawContent);
