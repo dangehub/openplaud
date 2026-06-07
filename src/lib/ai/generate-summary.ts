@@ -212,68 +212,67 @@ export async function generateSummaryForRecording(
     let keyPoints: string[] = [];
     let actionItems: string[] = [];
 
-    try {
-        const cleanContent = rawContent
-            .replace(/^```(?:json)?\s*/i, "")
-            .replace(/\s*```$/i, "")
-            .trim();
-            
-        const parseJsonWithRepair = (jsonStr: string) => {
-            try {
-                return JSON.parse(jsonStr);
-            } catch (err) {
-                // Attempt to repair truncated JSON
-                let repaired = jsonStr.replace(/,\s*$/, "");
-                let openBraces = 0;
-                let openBrackets = 0;
-                let inString = false;
-                let escape = false;
+    const cleanContent = rawContent
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/i, "")
+        .trim();
 
-                for (let i = 0; i < repaired.length; i++) {
-                    const char = repaired[i];
-                    if (escape) {
-                        escape = false;
-                        continue;
-                    }
-                    if (char === '\\') {
-                        escape = true;
-                        continue;
-                    }
-                    if (char === '"') {
-                        inString = !inString;
-                        continue;
-                    }
-                    if (!inString) {
-                        if (char === '{') openBraces++;
-                        else if (char === '}') openBraces--;
-                        else if (char === '[') openBrackets++;
-                        else if (char === ']') openBrackets--;
-                    }
-                }
-
-                if (inString) repaired += '"';
-                while (openBrackets-- > 0) repaired += ']';
-                while (openBraces-- > 0) repaired += '}';
-
-                return JSON.parse(repaired);
-            }
-        };
-
+    const parseJsonWithRepair = (jsonStr: string) => {
         try {
-            const parsed = parseJsonWithRepair(cleanContent);
-            summary =
-                parsed.summary ||
-                parsed.text ||
-                parsed.content ||
-                (typeof parsed === "object" && Object.values(parsed)[0]) ||
-                "";
-            keyPoints = Array.isArray(parsed.keyPoints) ? parsed.keyPoints : [];
-            actionItems = Array.isArray(parsed.actionItems)
-                ? parsed.actionItems
-                : [];
+            return JSON.parse(jsonStr);
         } catch {
-            summary = rawContent;
+            // Attempt to repair truncated JSON
+            let repaired = jsonStr.replace(/,\s*$/, "");
+            let openBraces = 0;
+            let openBrackets = 0;
+            let inString = false;
+            let escape = false;
+
+            for (let i = 0; i < repaired.length; i++) {
+                const char = repaired[i];
+                if (escape) {
+                    escape = false;
+                    continue;
+                }
+                if (char === '\\') {
+                    escape = true;
+                    continue;
+                }
+                if (char === '"') {
+                    inString = !inString;
+                    continue;
+                }
+                if (!inString) {
+                    if (char === '{') openBraces++;
+                    else if (char === '}') openBraces--;
+                    else if (char === '[') openBrackets++;
+                    else if (char === ']') openBrackets--;
+                }
+            }
+
+            if (inString) repaired += '"';
+            while (openBrackets-- > 0) repaired += ']';
+            while (openBraces-- > 0) repaired += '}';
+
+            return JSON.parse(repaired);
         }
+    };
+
+    try {
+        const parsed = parseJsonWithRepair(cleanContent);
+        summary =
+            parsed.summary ||
+            parsed.text ||
+            parsed.content ||
+            (typeof parsed === "object" && Object.values(parsed)[0]) ||
+            "";
+        keyPoints = Array.isArray(parsed.keyPoints) ? parsed.keyPoints : [];
+        actionItems = Array.isArray(parsed.actionItems)
+            ? parsed.actionItems
+            : [];
+    } catch {
+        summary = rawContent;
+    }
 
     const RECORDING_TOMBSTONED = Symbol("recording-tombstoned");
     try {
