@@ -1,6 +1,7 @@
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { plaudConnections, recordings, userSettings, users } from "@/db/schema";
+import { decrypt } from "@/lib/encryption";
 import { encryptText } from "@/lib/encryption/fields";
 import { env } from "@/lib/env";
 import { sendNewRecordingBarkNotification } from "@/lib/notifications/bark";
@@ -10,6 +11,21 @@ import { createUserStorageProvider } from "@/lib/storage/factory";
 import { transcribeRecording } from "@/lib/transcription/transcribe-recording";
 import { emitEvent } from "@/lib/webhooks/emit";
 import type { PlaudRecording } from "@/types/plaud";
+
+/** Decode a JWT payload and extract the `exp` claim (seconds since epoch).
+ *  Returns null if the token is not a valid JWT or has no exp claim. */
+function parseJwtExp(token: string): number | null {
+    try {
+        const parts = token.split(".");
+        if (parts.length !== 3) return null;
+        const payload = JSON.parse(
+            Buffer.from(parts[1], "base64url").toString("utf8"),
+        );
+        return typeof payload.exp === "number" ? payload.exp : null;
+    } catch {
+        return null;
+    }
+}
 
 const SYNC_CONFIG = {
     PAGE_SIZE: 50,
@@ -303,6 +319,21 @@ async function runSyncRecordingsForUser(userId: string): Promise<SyncResult> {
 
         if (!connection) {
             result.errors.push("No Plaud connection found");
+            return result;
+        }
+
+        // Early JWT expiry check — avoids a wasted Plaud API round-trip
+        // that returns a cryptic "workspace token expired" error.
+        const decryptedToken = decrypt(connection.bearerToken);
+        const tokenExp = parseJwtExp(decryptedToken);
+        if (tokenExp !== null && tokenExp < Date.now() / 1000) {
+            const expiredAt = new Date(tokenExp * 1000).toISOString();
+            console.error(
+                `[sync] Plaud bearer token expired at ${expiredAt}. User must reconnect.`,
+            );
+            result.errors.push(
+                `Plaud access token expired (${expiredAt}). Please reconnect your Plaud account in Settings.`,
+            );
             return result;
         }
 
