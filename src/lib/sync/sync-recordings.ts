@@ -365,12 +365,12 @@ async function runSyncRecordingsForUser(userId: string): Promise<SyncResult> {
                     "[sync] Plaud API returned no data_file_list. Response keys:",
                     Object.keys(recordingsResponse),
                     "status:",
-                    (recordingsResponse as Record<string, unknown>).status,
+                    recordingsResponse.status,
                     "msg:",
-                    (recordingsResponse as Record<string, unknown>).msg,
+                    recordingsResponse.msg,
                 );
                 result.errors.push(
-                    `Plaud API error: ${(recordingsResponse as Record<string, unknown>).msg || "unexpected response format"}`,
+                    `Plaud API error: ${recordingsResponse.msg || "unexpected response format"}`,
                 );
                 break;
             }
