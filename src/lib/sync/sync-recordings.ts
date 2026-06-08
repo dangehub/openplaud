@@ -360,8 +360,18 @@ async function runSyncRecordingsForUser(userId: string): Promise<SyncResult> {
 
             const plaudRecordings = recordingsResponse.data_file_list;
 
+            console.log(
+                `[sync] page=${page} plaud_total=${recordingsResponse.data_file_total} fetched=${plaudRecordings.length} skip=${skip}`,
+            );
+
             if (plaudRecordings.length === 0) {
                 break;
+            }
+
+            for (const rec of plaudRecordings) {
+                console.log(
+                    `[sync]   file=${rec.id} name="${rec.filename}" start=${new Date(rec.start_time).toISOString()} trash=${rec.is_trash}`,
+                );
             }
 
             for (
