@@ -360,6 +360,21 @@ async function runSyncRecordingsForUser(userId: string): Promise<SyncResult> {
 
             const plaudRecordings = recordingsResponse.data_file_list;
 
+            if (!plaudRecordings) {
+                console.error(
+                    "[sync] Plaud API returned no data_file_list. Response keys:",
+                    Object.keys(recordingsResponse),
+                    "status:",
+                    (recordingsResponse as Record<string, unknown>).status,
+                    "msg:",
+                    (recordingsResponse as Record<string, unknown>).msg,
+                );
+                result.errors.push(
+                    `Plaud API error: ${(recordingsResponse as Record<string, unknown>).msg || "unexpected response format"}`,
+                );
+                break;
+            }
+
             console.log(
                 `[sync] page=${page} plaud_total=${recordingsResponse.data_file_total} fetched=${plaudRecordings.length} skip=${skip}`,
             );
