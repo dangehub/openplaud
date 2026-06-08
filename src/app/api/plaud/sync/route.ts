@@ -20,11 +20,19 @@ export const POST = apiHandler(async (request: Request) => {
         `[sync-route] done new=${result.newRecordings} updated=${result.updatedRecordings} errors=${JSON.stringify(result.errors)} inProgress=${result.inProgress}`,
     );
 
-    return NextResponse.json({
-        success: true,
-        newRecordings: result.newRecordings,
-        updatedRecordings: result.updatedRecordings,
-        errors: result.errors,
-        inProgress: result.inProgress,
-    });
+    const hasResults =
+        result.newRecordings > 0 || result.updatedRecordings > 0;
+    const success =
+        result.errors.length === 0 || hasResults || !!result.inProgress;
+
+    return NextResponse.json(
+        {
+            success,
+            newRecordings: result.newRecordings,
+            updatedRecordings: result.updatedRecordings,
+            errors: result.errors,
+            inProgress: result.inProgress,
+        },
+        { status: success ? 200 : 502 },
+    );
 });
