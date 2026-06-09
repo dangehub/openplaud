@@ -1,12 +1,16 @@
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { plaudConnections, recordings, userSettings, users } from "@/db/schema";
-import { decrypt } from "@/lib/encryption";
+import { decrypt, encrypt } from "@/lib/encryption";
 import { encryptText } from "@/lib/encryption/fields";
 import { env } from "@/lib/env";
 import { sendNewRecordingBarkNotification } from "@/lib/notifications/bark";
 import { sendNewRecordingEmail } from "@/lib/notifications/email";
 import { createPlaudClient } from "@/lib/plaud/client-factory";
+import {
+    refreshWorkspaceToken,
+    shouldRefreshWsToken,
+} from "@/lib/plaud/ws-refresh";
 import { createUserStorageProvider } from "@/lib/storage/factory";
 import { transcribeRecording } from "@/lib/transcription/transcribe-recording";
 import { emitEvent } from "@/lib/webhooks/emit";
@@ -322,19 +326,81 @@ async function runSyncRecordingsForUser(userId: string): Promise<SyncResult> {
             return result;
         }
 
-        // Early JWT expiry check — avoids a wasted Plaud API round-trip
-        // that returns a cryptic "workspace token expired" error.
-        const decryptedToken = decrypt(connection.bearerToken);
-        const tokenExp = parseJwtExp(decryptedToken);
-        if (tokenExp !== null && tokenExp < Date.now() / 1000) {
-            const expiredAt = new Date(tokenExp * 1000).toISOString();
-            console.error(
-                `[sync] Plaud bearer token expired at ${expiredAt}. User must reconnect.`,
-            );
-            result.errors.push(
-                `Plaud access token expired (${expiredAt}). Please reconnect your Plaud account in Settings.`,
-            );
-            return result;
+        // ── Token refresh / expiry check ──────────────────────────
+        // CN-region connections store a short-lived WT + a ~30-day WRT.
+        // If the WT is expired (or about to), refresh it automatically.
+        // Global-region connections store a long-lived UT (~300 days);
+        // for those, just check expiry and bail with a helpful message.
+
+        let effectiveBearerToken = connection.bearerToken;
+
+        if (connection.wsRefreshToken) {
+            // CN-region: auto-refresh if WT expired or about to expire
+            if (shouldRefreshWsToken(connection.wsTokenExpiresAt)) {
+                console.log(
+                    "[sync] workspace token expired or expiring, refreshing...",
+                );
+                if (!connection.workspaceId) {
+                    result.errors.push(
+                        "Workspace token refresh failed: missing workspace ID. Please reconnect your Plaud account in Settings.",
+                    );
+                    return result;
+                }
+                try {
+                    const decryptedWrt = decrypt(connection.wsRefreshToken);
+                    const refreshed = await refreshWorkspaceToken(
+                        decryptedWrt,
+                        connection.workspaceId,
+                        connection.apiBase,
+                    );
+                    // Persist the new tokens
+                    const encryptedWt = encrypt(refreshed.workspaceToken);
+                    const encryptedWrt = encrypt(refreshed.refreshToken);
+                    await db
+                        .update(plaudConnections)
+                        .set({
+                            bearerToken: encryptedWt,
+                            wsRefreshToken: encryptedWrt,
+                            wsTokenExpiresAt: refreshed.expiresAt,
+                            updatedAt: new Date(),
+                        })
+                        .where(
+                            and(
+                                eq(plaudConnections.id, connection.id),
+                                eq(plaudConnections.userId, userId),
+                            ),
+                        );
+                    effectiveBearerToken = encryptedWt;
+                    console.log(
+                        `[sync] workspace token refreshed, new expiry: ${refreshed.expiresAt.toISOString()}`,
+                    );
+                } catch (err) {
+                    const msg =
+                        err instanceof Error ? err.message : String(err);
+                    console.error(
+                        "[sync] workspace token refresh failed:",
+                        msg,
+                    );
+                    result.errors.push(
+                        `Workspace token refresh failed: ${msg}. Please reconnect your Plaud account in Settings.`,
+                    );
+                    return result;
+                }
+            }
+        } else {
+            // Global-region: static JWT expiry check
+            const decryptedToken = decrypt(connection.bearerToken);
+            const tokenExp = parseJwtExp(decryptedToken);
+            if (tokenExp !== null && tokenExp < Date.now() / 1000) {
+                const expiredAt = new Date(tokenExp * 1000).toISOString();
+                console.error(
+                    `[sync] Plaud bearer token expired at ${expiredAt}. User must reconnect.`,
+                );
+                result.errors.push(
+                    `Plaud access token expired (${expiredAt}). Please reconnect your Plaud account in Settings.`,
+                );
+                return result;
+            }
         }
 
         const [settings] = await db
@@ -368,7 +434,7 @@ async function runSyncRecordingsForUser(userId: string): Promise<SyncResult> {
         };
 
         const plaudClient = await createPlaudClient(
-            connection.bearerToken,
+            effectiveBearerToken,
             connection.apiBase,
             connection.workspaceId,
         );

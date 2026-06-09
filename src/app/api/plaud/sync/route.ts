@@ -20,8 +20,7 @@ export const POST = apiHandler(async (request: Request) => {
         `[sync-route] done new=${result.newRecordings} updated=${result.updatedRecordings} errors=${JSON.stringify(result.errors)} inProgress=${result.inProgress}`,
     );
 
-    const hasResults =
-        result.newRecordings > 0 || result.updatedRecordings > 0;
+    const hasResults = result.newRecordings > 0 || result.updatedRecordings > 0;
     const success =
         result.errors.length === 0 || hasResults || !!result.inProgress;
 

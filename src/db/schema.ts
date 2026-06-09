@@ -171,6 +171,14 @@ export const plaudConnections = pgTable("plaud_connections", {
     // Null for connections created before this column existed; resolved and
     // persisted lazily on next sync.
     workspaceId: text("workspace_id"),
+    // Encrypted workspace refresh token (WRT). Used by CN-region accounts
+    // where the UT/WT expire after 24h. The WRT (~30 day lifetime) allows
+    // auto-refreshing the WT before each sync. Null for global-region
+    // connections that use long-lived UTs.
+    wsRefreshToken: text("ws_refresh_token"),
+    // When the current workspace token (stored in bearerToken for CN-region
+    // connections) expires. Null for global-region connections.
+    wsTokenExpiresAt: timestamp("ws_token_expires_at"),
     lastSync: timestamp("last_sync"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

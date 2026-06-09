@@ -58,10 +58,14 @@ export class PlaudClient {
         userToken: string,
         apiBase: string = DEFAULT_PLAUD_API_BASE,
         workspaceId?: string | null,
+        workspaceToken?: string,
     ) {
         this.userToken = userToken;
         this.apiBase = apiBase;
         this.resolvedWorkspaceId = workspaceId ?? undefined;
+        if (workspaceToken) {
+            this.workspaceToken = workspaceToken;
+        }
     }
 
     get workspaceId(): string | undefined {

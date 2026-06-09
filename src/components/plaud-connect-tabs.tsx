@@ -497,11 +497,48 @@ function PasteTokenPane({
             : PLAUD_SERVERS[serverKey].apiBase;
 
     const handleSubmit = useCallback(async () => {
-        const trimmed = token.trim().replace(/^Bearer\s+/i, "");
+        let trimmed = token.trim();
         if (!trimmed) {
-            toast.error("Paste your Plaud access token first");
+            toast.error(
+                "Paste your Plaud access token or workspace JSON first",
+            );
             return;
         }
+
+        // CN-region workspace JSON export check
+        if (trimmed.startsWith("{")) {
+            setIsLoading(true);
+            try {
+                const res = await fetch("/api/plaud/auth/connect-workspace", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        workspaceData: trimmed,
+                        source: "paste_json",
+                    }),
+                });
+                if (!res.ok) {
+                    await toastApiError(res, {
+                        fallback: "Failed to connect Plaud",
+                        errorContext: "connect Plaud via workspace JSON",
+                    });
+                    return;
+                }
+                toast.success("Plaud CN account connected");
+                onConnected();
+            } catch (err) {
+                toast.error(
+                    err instanceof Error
+                        ? err.message
+                        : "Failed to connect Plaud",
+                );
+            } finally {
+                setIsLoading(false);
+            }
+            return;
+        }
+
+        trimmed = trimmed.replace(/^Bearer\s+/i, "");
         if (serverKey === "custom" && !apiBase) {
             toast.error("Enter your custom Plaud API URL");
             return;
@@ -589,10 +626,12 @@ function PasteTokenPane({
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="plaud-access-token">Access token</Label>
+                <Label htmlFor="plaud-access-token">
+                    Token or Workspace JSON
+                </Label>
                 <textarea
                     id="plaud-access-token"
-                    placeholder="eyJhbGciOi…"
+                    placeholder="eyJhbGciOi… or {&#34;workspaceToken&#34;:...}"
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
                     disabled={isLoading}
@@ -609,12 +648,12 @@ function PasteTokenPane({
                 disabled={isLoading || !token.trim()}
                 className="w-full"
             >
-                {isLoading ? "Validating with plaud.ai…" : "Connect with token"}
+                {isLoading ? "Validating with plaud.ai…" : "Connect"}
             </Button>
 
             <details className="group">
                 <summary className="text-xs text-muted-foreground/80 cursor-pointer hover:text-muted-foreground transition-colors select-none">
-                    How do I find my access token?
+                    How do I find my access token? (Global region)
                 </summary>
                 <ol className="mt-2 ml-4 space-y-1.5 text-xs text-muted-foreground list-decimal leading-relaxed">
                     <li>
@@ -627,16 +666,7 @@ function PasteTokenPane({
                         >
                             web.plaud.ai
                         </a>{" "}
-                        (or{" "}
-                        <a
-                            href="https://web.plaud.cn"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline decoration-dotted underline-offset-2"
-                        >
-                            web.plaud.cn
-                        </a>{" "}
-                        for China) in another tab and sign in.
+                        in another tab and sign in.
                     </li>
                     <li>
                         Open browser devtools (F12 / Cmd+Option+I) →{" "}
@@ -644,9 +674,8 @@ function PasteTokenPane({
                     </li>
                     <li>
                         Refresh the page. Click any request to a host starting
-                        with <span className="font-mono">api.plaud.ai</span>,{" "}
-                        <span className="font-mono">api-euc1.plaud.ai</span>, or{" "}
-                        <span className="font-mono">api.plaud.cn</span>.
+                        with <span className="font-mono">api.plaud.ai</span> or{" "}
+                        <span className="font-mono">api-euc1.plaud.ai</span>.
                     </li>
                     <li>
                         Under <span className="font-medium">Headers</span> →{" "}
@@ -656,17 +685,52 @@ function PasteTokenPane({
                         <span className="font-mono">Bearer</span> and paste it
                         above.
                     </li>
-                    <li>
-                        Pick the matching region from the dropdown. For example,
-                        if the host was{" "}
-                        <span className="font-mono">api-euc1.plaud.ai</span>,
-                        choose EU.
-                    </li>
+                    <li>Pick the matching region from the dropdown.</li>
                 </ol>
-                <p className="mt-2 text-xs text-muted-foreground/80 leading-relaxed">
-                    The token lives ~300 days. It is encrypted (AES-256-GCM)
-                    before storage on this instance.
-                </p>
+            </details>
+
+            <details className="group">
+                <summary className="text-xs text-muted-foreground/80 cursor-pointer hover:text-muted-foreground transition-colors select-none">
+                    For China (web.plaud.cn) users - Auto-refresh support
+                </summary>
+                <div className="mt-2 space-y-2 text-xs text-muted-foreground leading-relaxed">
+                    <p>
+                        Plaud CN access tokens expire in 24 hours. To enable
+                        30-day auto-refresh, export your workspace tokens using
+                        this script:
+                    </p>
+                    <ol className="ml-4 space-y-1.5 list-decimal">
+                        <li>
+                            Open{" "}
+                            <a
+                                href="https://web.plaud.cn"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline decoration-dotted underline-offset-2"
+                            >
+                                web.plaud.cn
+                            </a>{" "}
+                            and sign in.
+                        </li>
+                        <li>
+                            Open browser devtools (F12 / Cmd+Option+I) →{" "}
+                            <span className="font-medium">Console</span> tab.
+                        </li>
+                        <li>
+                            Paste this script and press Enter:
+                            <div className="mt-1 p-2 bg-muted rounded font-mono text-[10px] break-all select-all border">
+                                JSON.stringify(JSON.parse(localStorage.getItem('pld_'
+                                + localStorage.getItem('pld_userId') +
+                                ':workspaceList'))[0])
+                            </div>
+                        </li>
+                        <li>
+                            Copy the resulting JSON string (without the outer
+                            quotes if the browser added them) and paste it into
+                            the box above.
+                        </li>
+                    </ol>
+                </div>
             </details>
         </div>
     );

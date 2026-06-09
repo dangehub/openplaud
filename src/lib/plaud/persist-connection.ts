@@ -125,3 +125,124 @@ export async function persistPlaudConnection({
         workspaceId: resolvedWorkspaceId,
     };
 }
+
+export interface PersistPlaudWorkspaceConnectionInput {
+    userId: string;
+    workspaceToken: string;
+    refreshToken: string;
+    expiresAt: Date;
+    workspaceId: string;
+    apiBase: string;
+    plaudEmail: string | null;
+}
+
+/** Persist a CN-region connection directly using a workspace token + refresh token. */
+export async function persistPlaudWorkspaceConnection({
+    userId,
+    workspaceToken,
+    refreshToken,
+    expiresAt,
+    workspaceId,
+    apiBase,
+    plaudEmail,
+}: PersistPlaudWorkspaceConnectionInput): Promise<PersistPlaudConnectionResult> {
+    // For WT connections, we use the WT as the bearer token
+    const client = new PlaudClient(
+        workspaceToken,
+        apiBase,
+        workspaceId,
+        workspaceToken,
+    );
+
+    let deviceList: PlaudDeviceListResponse;
+    try {
+        deviceList = await client.listDevices();
+    } catch (err) {
+        console.warn(
+            "[plaud/persist] device list validation failed for WT:",
+            err instanceof Error ? err.message : err,
+        );
+        throw err;
+    }
+
+    const encryptedWt = encrypt(workspaceToken);
+    const encryptedWrt = encrypt(refreshToken);
+
+    await db.transaction(async (tx) => {
+        await acquirePlaudConnectLock(tx, userId);
+
+        const [existingConnection] = await tx
+            .select()
+            .from(plaudConnections)
+            .where(eq(plaudConnections.userId, userId))
+            .limit(1);
+
+        if (existingConnection) {
+            await tx
+                .update(plaudConnections)
+                .set({
+                    bearerToken: encryptedWt, // Store WT as bearer
+                    apiBase,
+                    plaudEmail,
+                    workspaceId,
+                    wsRefreshToken: encryptedWrt,
+                    wsTokenExpiresAt: expiresAt,
+                    updatedAt: new Date(),
+                })
+                .where(
+                    and(
+                        eq(plaudConnections.id, existingConnection.id),
+                        eq(plaudConnections.userId, userId),
+                    ),
+                );
+        } else {
+            await tx.insert(plaudConnections).values({
+                userId,
+                bearerToken: encryptedWt,
+                apiBase,
+                plaudEmail,
+                workspaceId,
+                wsRefreshToken: encryptedWrt,
+                wsTokenExpiresAt: expiresAt,
+            });
+        }
+
+        for (const device of deviceList.data_devices) {
+            const [existingDevice] = await tx
+                .select()
+                .from(plaudDevices)
+                .where(
+                    and(
+                        eq(plaudDevices.userId, userId),
+                        eq(plaudDevices.serialNumber, device.sn),
+                    ),
+                )
+                .limit(1);
+
+            if (existingDevice) {
+                await tx
+                    .update(plaudDevices)
+                    .set({
+                        name: device.name,
+                        model: device.model,
+                        versionNumber: device.version_number,
+                        updatedAt: new Date(),
+                    })
+                    .where(eq(plaudDevices.id, existingDevice.id));
+            } else {
+                await tx.insert(plaudDevices).values({
+                    userId,
+                    serialNumber: device.sn,
+                    name: device.name,
+                    model: device.model,
+                    versionNumber: device.version_number,
+                });
+            }
+        }
+    });
+
+    return {
+        devices: deviceList.data_devices,
+        workspaceId,
+    };
+}

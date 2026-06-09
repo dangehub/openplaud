@@ -176,6 +176,13 @@
       "when": 1780485594068,
       "tag": "0024_demonic_old_lace",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1781015100622,
+      "tag": "0025_odd_lilandra",
+      "breakpoints": true
     }
   ]
 }

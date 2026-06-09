@@ -200,7 +200,10 @@ export async function generateSummaryForRecording(
             temperature: 0.5,
         });
         rawContent = response.choices[0]?.message?.content?.trim() || "";
-        console.log("[generateSummaryForRecording] AI raw response:", rawContent);
+        console.log(
+            "[generateSummaryForRecording] AI raw response:",
+            rawContent,
+        );
     } catch (error) {
         await emitEvent("summary.failed", userId, recordingId, {
             error: error instanceof Error ? error.message : String(error),
@@ -234,7 +237,7 @@ export async function generateSummaryForRecording(
                     escape = false;
                     continue;
                 }
-                if (char === '\\') {
+                if (char === "\\") {
                     escape = true;
                     continue;
                 }
@@ -243,16 +246,16 @@ export async function generateSummaryForRecording(
                     continue;
                 }
                 if (!inString) {
-                    if (char === '{') openBraces++;
-                    else if (char === '}') openBraces--;
-                    else if (char === '[') openBrackets++;
-                    else if (char === ']') openBrackets--;
+                    if (char === "{") openBraces++;
+                    else if (char === "}") openBraces--;
+                    else if (char === "[") openBrackets++;
+                    else if (char === "]") openBrackets--;
                 }
             }
 
             if (inString) repaired += '"';
-            while (openBrackets-- > 0) repaired += ']';
-            while (openBraces-- > 0) repaired += '}';
+            while (openBrackets-- > 0) repaired += "]";
+            while (openBraces-- > 0) repaired += "}";
 
             return JSON.parse(repaired);
         }
