@@ -719,9 +719,7 @@ function PasteTokenPane({
                         <li>
                             Paste this script and press Enter:
                             <div className="mt-1 p-2 bg-muted rounded font-mono text-[10px] break-all select-all border">
-                                JSON.stringify(JSON.parse(localStorage.getItem('pld_'
-                                + localStorage.getItem('pld_userId') +
-                                ':workspaceList'))[0])
+                                JSON.stringify(JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k =&gt; k.endsWith(':workspaceList'))))[0])
                             </div>
                         </li>
                         <li>
