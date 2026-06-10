@@ -30,7 +30,7 @@ services:
     #   - `0.1.0`   → pin to a specific version
     #   - `dev`     → rolling build from `main` (unstable, opt-in)
     # Override via OPENPLAUD_VERSION in .env. For local builds, see docker-compose.dev.yml.
-    image: qudange/openplaud:${OPENPLAUD_VERSION:-latest}
+    image: ghcr.io/dangehub/openplaud:${OPENPLAUD_VERSION:-dev}
     container_name: openplaud-app
     restart: unless-stopped
     ports:
