@@ -379,6 +379,5 @@ export function startWebhookWorker(): void {
     const interval = setInterval(() => {
         void deliverDueWebhooks();
     }, TICK_MS);
-    interval.unref?.();
     void deliverDueWebhooks();
 }
