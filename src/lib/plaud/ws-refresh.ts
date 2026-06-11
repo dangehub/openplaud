@@ -29,7 +29,7 @@ export async function refreshWorkspaceToken(
     expiresAt: Date;
     refreshExpiresAt: Date;
 }> {
-    const url = `${apiBase}/auth/workspace/refresh/${encodeURIComponent(workspaceId)}`;
+    const url = `${apiBase}/user-app/auth/workspace/refresh/${encodeURIComponent(workspaceId)}`;
 
     const res = await plaudFetch(url, {
         method: "POST",
@@ -40,6 +40,15 @@ export async function refreshWorkspaceToken(
         },
         body: "{}",
     });
+
+    const textBody = await res.text();
+    console.error(`[sync] workspace refresh response: HTTP ${res.status} body: ${textBody}`);
+    let body;
+    try {
+        body = JSON.parse(textBody) as WsRefreshResponse;
+    } catch {
+        body = {} as WsRefreshResponse;
+    }
 
     if (!res.ok) {
         if (res.status === 401) {
@@ -60,7 +69,14 @@ export async function refreshWorkspaceToken(
         );
     }
 
-    const body = await safeParseJson<WsRefreshResponse>(res);
+    if (body.status === -420) {
+        throw new AppError(
+            ErrorCode.PLAUD_INVALID_TOKEN,
+            "Workspace refresh token expired. Please reconnect your Plaud account.",
+            401,
+            { plaudStatus: body.status },
+        );
+    }
 
     if (
         body.status !== 0 ||
