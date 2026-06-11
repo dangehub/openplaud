@@ -38,8 +38,10 @@ export function parseTranscriptionResponse(
     return { text, detectedLanguage: null };
 }
 
+import type { Uploadable } from "openai";
+
 export function buildTranscriptionParams(args: {
-    file: File;
+    file: Uploadable;
     model: string;
     responseFormat: ResponseFormat;
     language?: string;

@@ -176,7 +176,7 @@ export async function transcribeRecording(
         // `recording.filename` is encrypted at rest; decrypt before passing
         // to the transcription provider as a filename hint.
         const decryptedFilename = decryptText(recording.filename);
-        const { file: audioFile, contentType } = buildAudioFile(
+        const { file: audioFile, contentType } = await buildAudioFile(
             audioBuffer,
             recording.storagePath,
             decryptedFilename,

@@ -1,7 +1,8 @@
+import { toFile, type Uploadable } from "openai";
 import { getAudioMimeType } from "@/lib/utils";
 
 export interface BuildAudioFileResult {
-    file: File;
+    file: Uploadable;
     contentType: string;
 }
 
@@ -15,12 +16,12 @@ function isOggContainer(audioBuffer: Buffer): boolean {
     );
 }
 
-/** Build the `File` passed to `openai.audio.transcriptions.create`. */
-export function buildAudioFile(
+/** Build the `Uploadable` passed to `openai.audio.transcriptions.create`. */
+export async function buildAudioFile(
     audioBuffer: Buffer,
     storagePath: string,
     decryptedFilename: string,
-): BuildAudioFileResult {
+): Promise<BuildAudioFileResult> {
     const isOgg = isOggContainer(audioBuffer);
 
     const ext = isOgg
@@ -33,14 +34,7 @@ export function buildAudioFile(
         ? decryptedFilename
         : `${decryptedFilename}.${ext}`;
 
-    const view = new Uint8Array(
-        audioBuffer.buffer as ArrayBuffer,
-        audioBuffer.byteOffset,
-        audioBuffer.byteLength,
-    );
-    const file = new File([view], filename, {
-        type: contentType,
-    });
+    const file = await toFile(audioBuffer, filename, { type: contentType });
 
     return { file, contentType };
 }
