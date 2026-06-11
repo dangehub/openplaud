@@ -46,6 +46,9 @@ RUN bun build scripts/encrypt-backfill.ts --target=bun --outfile=encrypt-backfil
 # Bundle standalone webhook worker
 RUN bun build src/lib/webhooks/standalone-worker.ts --target=bun --outfile=webhook-worker.js
 
+# Bundle standalone transcription worker
+RUN bun build src/lib/transcription/standalone-worker.ts --target=bun --outfile=transcription-worker.js
+
 
 # Final runtime image
 FROM base AS runner
@@ -67,6 +70,9 @@ COPY --from=builder /app/encrypt-backfill.js ./encrypt-backfill.js
 
 # Copy standalone webhook worker
 COPY --from=builder /app/webhook-worker.js ./webhook-worker.js
+
+# Copy standalone transcription worker
+COPY --from=builder /app/transcription-worker.js ./transcription-worker.js
 
 
 # Copy migrations folder
