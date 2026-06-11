@@ -183,6 +183,13 @@
       "when": 1781015100622,
       "tag": "0025_odd_lilandra",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1781145679922,
+      "tag": "0026_confused_hellcat",
+      "breakpoints": true
     }
   ]
 }

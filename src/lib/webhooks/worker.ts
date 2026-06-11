@@ -376,7 +376,7 @@ export function signalWebhookWorker(): void {
 export function startWebhookWorker(): void {
     if (started) return;
     started = true;
-    const interval = setInterval(() => {
+    const _interval = setInterval(() => {
         void deliverDueWebhooks();
     }, TICK_MS);
     void deliverDueWebhooks();

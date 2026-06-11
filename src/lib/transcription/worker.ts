@@ -1,67 +1,62 @@
-/// <reference lib="webworker" />
+import {
+    claimDueTranscriptionJobs,
+    markJobCompleted,
+    releaseOrFailJob,
+} from "@/db/queries/transcription-jobs";
+import { transcribeRecording } from "@/lib/transcription/transcribe-recording";
 
-import { type PipelineType, pipeline } from "@xenova/transformers";
+const TICK_MS = 10_000; // Scan every 10 seconds
+const MAX_RETRIES = 3;
 
-// @ts-expect-error -- disable local model cache in browser
-self.ONNX_CACHE = false;
+let started = false;
+let running = false;
 
-let transcriber: Awaited<ReturnType<typeof pipeline>> | null = null;
+export async function processDueJobs(): Promise<void> {
+    if (running) return;
+    running = true;
 
-async function initTranscriber(model: string) {
-    if (!transcriber) {
-        transcriber = await pipeline(
-            "automatic-speech-recognition" as PipelineType,
-            model,
-            { revision: "main" },
-        );
+    try {
+        let _processedCount = 0;
+        let lastBatchSize = 0;
+
+        do {
+            const claims = await claimDueTranscriptionJobs();
+            lastBatchSize = claims.length;
+
+            for (const { job } of claims) {
+                try {
+                    // Actual transcription
+                    await transcribeRecording(job.userId, job.recordingId);
+
+                    // Mark success
+                    await markJobCompleted(job.id, job.userId);
+                } catch (error) {
+                    const errorMsg =
+                        error instanceof Error ? error.message : String(error);
+                    console.error(
+                        `Transcription job failed for recording ${job.recordingId}:`,
+                        errorMsg,
+                    );
+                    await releaseOrFailJob(job, errorMsg, MAX_RETRIES);
+                }
+                _processedCount++;
+            }
+        } while (lastBatchSize > 0);
+    } catch (error) {
+        console.error("Error in transcription job processor:", error);
+    } finally {
+        running = false;
     }
-    return transcriber;
 }
 
-self.addEventListener("message", async (event) => {
-    const { type, audioData, model } = event.data;
+export function startTranscriptionWorker(): void {
+    if (started) return;
+    started = true;
 
-    if (type === "transcribe") {
-        try {
-            const pipe = await initTranscriber(model);
+    setInterval(() => {
+        void processDueJobs();
+    }, TICK_MS);
 
-            self.postMessage({ type: "progress", status: "transcribing" });
-
-            type TranscriberResult = {
-                text: string;
-                chunks?: { language?: string }[];
-            };
-
-            type Transcriber = (
-                input: unknown,
-                options: {
-                    return_timestamps: boolean;
-                    chunk_length_s: number;
-                    stride_length_s: number;
-                },
-            ) => Promise<TranscriberResult>;
-
-            const result = await (pipe as Transcriber)(audioData, {
-                return_timestamps: false,
-                chunk_length_s: 30,
-                stride_length_s: 5,
-            });
-
-            self.postMessage({
-                type: "complete",
-                text: result.text,
-                detectedLanguage: result.chunks?.[0]?.language || "en",
-            });
-        } catch (error) {
-            self.postMessage({
-                type: "error",
-                error:
-                    error instanceof Error
-                        ? error.message
-                        : "Transcription failed",
-            });
-        }
-    }
-});
-
-self.postMessage({ type: "ready" });
+    // Initial run
+    void processDueJobs();
+}

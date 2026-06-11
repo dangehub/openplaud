@@ -1,5 +1,6 @@
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/db";
+import { enqueueTranscriptionJobs } from "@/db/queries/transcription-jobs";
 import { plaudConnections, recordings, userSettings, users } from "@/db/schema";
 import { decrypt, encrypt } from "@/lib/encryption";
 import { encryptText } from "@/lib/encryption/fields";
@@ -12,7 +13,6 @@ import {
     shouldRefreshWsToken,
 } from "@/lib/plaud/ws-refresh";
 import { createUserStorageProvider } from "@/lib/storage/factory";
-import { transcribeRecording } from "@/lib/transcription/transcribe-recording";
 import { emitEvent } from "@/lib/webhooks/emit";
 import type { PlaudRecording } from "@/types/plaud";
 
@@ -588,11 +588,15 @@ async function runSyncRecordingsForUser(userId: string): Promise<SyncResult> {
             context.autoTranscribe &&
             result.pendingTranscriptionIds.length > 0
         ) {
-            queueTranscriptions(userId, result.pendingTranscriptionIds).catch(
-                (error) => {
-                    console.error("Background transcription failed:", error);
-                },
-            );
+            enqueueTranscriptionJobs(
+                userId,
+                result.pendingTranscriptionIds,
+            ).catch((error) => {
+                console.error(
+                    "Failed to enqueue background transcriptions:",
+                    error,
+                );
+            });
         }
 
         return result;
@@ -602,21 +606,5 @@ async function runSyncRecordingsForUser(userId: string): Promise<SyncResult> {
         console.error("[sync] sync failed:", error);
         result.errors.push(`Sync failed: ${errorMessage}`);
         return result;
-    }
-}
-
-async function queueTranscriptions(
-    userId: string,
-    recordingIds: string[],
-): Promise<void> {
-    for (const recordingId of recordingIds) {
-        try {
-            await transcribeRecording(userId, recordingId);
-        } catch (error) {
-            console.error(
-                `Auto-transcription failed for recording ${recordingId}:`,
-                error,
-            );
-        }
     }
 }

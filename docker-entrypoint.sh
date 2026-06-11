@@ -7,7 +7,8 @@ echo "⏳ Running database migrations..."
 bun migrate-idempotent.js
 
 echo "🚀 Starting application..."
-# Start standalone webhook worker in the background
+# Start standalone workers in the background
 bun webhook-worker.js &
+bun transcription-worker.js &
 
 exec "$@"

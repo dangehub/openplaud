@@ -611,3 +611,36 @@ export const installScriptHits = pgTable(
         pk: primaryKey({ columns: [table.day, table.version] }),
     }),
 );
+
+export const transcriptionJobs = pgTable(
+    "transcription_jobs",
+    {
+        id: text("id")
+            .primaryKey()
+            .$defaultFn(() => nanoid()),
+        userId: text("user_id")
+            .notNull()
+            .references(() => users.id, { onDelete: "cascade" }),
+        recordingId: text("recording_id")
+            .notNull()
+            .references(() => recordings.id, { onDelete: "cascade" }),
+        status: varchar("status", { length: 16 }).notNull().default("pending"),
+        attempts: integer("attempts").notNull().default(0),
+        nextAttemptAt: timestamp("next_attempt_at").notNull().defaultNow(),
+        lastError: text("last_error"),
+        createdAt: timestamp("created_at").notNull().defaultNow(),
+        updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    },
+    (table) => ({
+        pendingScanIdx: index("transcription_jobs_pending_idx").on(
+            table.status,
+            table.nextAttemptAt,
+        ),
+        recordingIdIdx: index("transcription_jobs_recording_id_idx").on(
+            table.recordingId,
+        ),
+        userRecordingUnique: unique(
+            "transcription_jobs_user_recording_unique",
+        ).on(table.userId, table.recordingId),
+    }),
+);
